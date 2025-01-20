@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run clean && tsc -b && vite build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
@@ -13,7 +13,8 @@
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "prepush": "npm run lint && npm run test",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "clean": "rm -rf src/**/*.js src/**/*.test.js dist"
   },
   "dependencies": {
     "crypto-js": "^4.2.0",
