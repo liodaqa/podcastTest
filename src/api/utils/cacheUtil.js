@@ -3,20 +3,19 @@ import CryptoJS from 'crypto-js';
 const IS_PRODUCTION = import.meta.env.MODE === 'production';
 // Require the secret key only in production
 const SECRET_KEY = IS_PRODUCTION
-    ? import.meta.env.VITE_SECRET_KEY ||
-        (() => {
-            throw new Error('Missing VITE_SECRET_KEY in production environment!');
-        })()
-    : null;
+  ? import.meta.env.VITE_SECRET_KEY ||
+    (() => {
+      throw new Error('Missing VITE_SECRET_KEY in production environment!');
+    })()
+  : null;
 /**
  * Encrypt data using AES encryption.
  * @param data - The data to encrypt.
  * @returns Encrypted string (or plaintext in development).
  */
 const encrypt = (data) => {
-    if (!IS_PRODUCTION)
-        return data; // Skip encryption in development
-    return CryptoJS.AES.encrypt(data, SECRET_KEY).toString();
+  if (!IS_PRODUCTION) return data; // Skip encryption in development
+  return CryptoJS.AES.encrypt(data, SECRET_KEY).toString();
 };
 /**
  * Decrypt data using AES decryption.
@@ -24,15 +23,13 @@ const encrypt = (data) => {
  * @returns Decrypted string (or plaintext in development).
  */
 const decrypt = (cipher) => {
-    if (!IS_PRODUCTION)
-        return cipher; // Skip decryption in development
-    try {
-        return CryptoJS.AES.decrypt(cipher, SECRET_KEY).toString(CryptoJS.enc.Utf8);
-    }
-    catch (error) {
-        console.error('[CacheUtils] Decryption failed:', error);
-        return '';
-    }
+  if (!IS_PRODUCTION) return cipher; // Skip decryption in development
+  try {
+    return CryptoJS.AES.decrypt(cipher, SECRET_KEY).toString(CryptoJS.enc.Utf8);
+  } catch (error) {
+    console.error('[CacheUtils] Decryption failed:', error);
+    return '';
+  }
 };
 /**
  * Hash a key using SHA-256.
@@ -40,9 +37,8 @@ const decrypt = (cipher) => {
  * @returns The hashed key (or original key in development).
  */
 const hashKey = (key) => {
-    if (!IS_PRODUCTION)
-        return key; // Skip hashing in development
-    return CryptoJS.SHA256(key).toString();
+  if (!IS_PRODUCTION) return key; // Skip hashing in development
+  return CryptoJS.SHA256(key).toString();
 };
 /**
  * Retrieve cached data from localStorage with type safety.
@@ -51,24 +47,22 @@ const hashKey = (key) => {
  * @returns The cached data or `null` if the cache is invalid, expired, or corrupted.
  */
 export const getCachedData = (key, duration) => {
-    const storageKey = hashKey(key); // Hash the key only in production
-    const cached = localStorage.getItem(storageKey);
-    if (!cached)
-        return null;
-    try {
-        const decrypted = decrypt(cached);
-        const { data, timestamp } = JSON.parse(decrypted);
-        if (Date.now() - timestamp > duration) {
-            localStorage.removeItem(storageKey);
-            return null;
-        }
-        return data;
+  const storageKey = hashKey(key); // Hash the key only in production
+  const cached = localStorage.getItem(storageKey);
+  if (!cached) return null;
+  try {
+    const decrypted = decrypt(cached);
+    const { data, timestamp } = JSON.parse(decrypted);
+    if (Date.now() - timestamp > duration) {
+      localStorage.removeItem(storageKey);
+      return null;
     }
-    catch (error) {
-        console.error('[CacheUtils] Failed to retrieve cached data:', error);
-        localStorage.removeItem(storageKey);
-        return null;
-    }
+    return data;
+  } catch (error) {
+    console.error('[CacheUtils] Failed to retrieve cached data:', error);
+    localStorage.removeItem(storageKey);
+    return null;
+  }
 };
 /**
  * Store data in localStorage with a timestamp for expiration.
@@ -76,16 +70,15 @@ export const getCachedData = (key, duration) => {
  * @param data - The data to store in the cache.
  */
 export const setCachedData = (key, data) => {
-    try {
-        const storageKey = hashKey(key); // Hash the key only in production
-        const cache = {
-            data,
-            timestamp: Date.now(),
-        };
-        const encrypted = encrypt(JSON.stringify(cache));
-        localStorage.setItem(storageKey, encrypted);
-    }
-    catch (error) {
-        console.error('[CacheUtils] Failed to store data in cache:', error);
-    }
+  try {
+    const storageKey = hashKey(key); // Hash the key only in production
+    const cache = {
+      data,
+      timestamp: Date.now(),
+    };
+    const encrypted = encrypt(JSON.stringify(cache));
+    localStorage.setItem(storageKey, encrypted);
+  } catch (error) {
+    console.error('[CacheUtils] Failed to store data in cache:', error);
+  }
 };

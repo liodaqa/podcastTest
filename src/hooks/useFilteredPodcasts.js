@@ -7,13 +7,16 @@ import { useMemo } from 'react';
  * @returns The filtered list of podcasts.
  */
 const useFilteredPodcasts = (podcasts, searchTerm) => {
-    return useMemo(() => {
-        if (!searchTerm) {
-            return podcasts;
-        }
-        const lowerCaseTerm = searchTerm.toLowerCase();
-        return podcasts.filter((podcast) => podcast.name.toLowerCase().includes(lowerCaseTerm) ||
-            podcast.artist.toLowerCase().includes(lowerCaseTerm));
-    }, [podcasts, searchTerm]);
+  return useMemo(() => {
+    if (!searchTerm) {
+      return podcasts;
+    }
+    const lowerCaseTerm = searchTerm.toLowerCase();
+    return podcasts.filter(
+      (podcast) =>
+        podcast.name.toLowerCase().includes(lowerCaseTerm) ||
+        podcast.artist.toLowerCase().includes(lowerCaseTerm)
+    );
+  }, [podcasts, searchTerm]);
 };
 export default useFilteredPodcasts;

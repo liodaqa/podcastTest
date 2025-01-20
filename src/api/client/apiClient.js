@@ -6,25 +6,23 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
  * @returns Parsed JSON response.
  */
 export const apiClient = async (endpoint, options = {}) => {
-    if (!endpoint) {
-        throw new Error('Endpoint cannot be empty');
+  if (!endpoint) {
+    throw new Error('Endpoint cannot be empty');
+  }
+  const url = BASE_URL ? `${BASE_URL}${endpoint}` : endpoint;
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const url = BASE_URL ? `${BASE_URL}${endpoint}` : endpoint;
     try {
-        const response = await fetch(url, options);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        try {
-            return await response.json();
-        }
-        catch (error) {
-            console.error('[API Client] Failed to parse JSON response:', error);
-            throw new Error('Failed to parse JSON response');
-        }
+      return await response.json();
+    } catch (error) {
+      console.error('[API Client] Failed to parse JSON response:', error);
+      throw new Error('Failed to parse JSON response');
     }
-    catch (error) {
-        console.error('[API Client] Error:', error);
-        throw error;
-    }
+  } catch (error) {
+    console.error('[API Client] Error:', error);
+    throw error;
+  }
 };
