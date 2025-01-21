@@ -8,7 +8,8 @@ export default defineConfig(({ mode }) => ({
       mode === 'development'
         ? {
             '/api': {
-              target: 'https://itunes.apple.com',
+              // target: 'https://itunes.apple.com',
+              target: 'http://localhost:5173',
               changeOrigin: true,
               rewrite: (path) => path.replace(/^\/api/, ''),
             },

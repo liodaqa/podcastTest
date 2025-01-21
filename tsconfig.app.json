@@ -9,6 +9,8 @@
     "strict": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
+    "typeRoots": ["node_modules/@types", "types"],
+
     "forceConsistentCasingInFileNames": true,
     "types": ["vite/client", "jest", "@testing-library/jest-dom", "node"],
     "baseUrl": "./",
@@ -21,7 +23,8 @@
     "src/**/*.tsx",
     "jest.setup.ts",
     "src/global.d.ts",
-    "vite-env.d.ts"
+    "vite-env.d.ts",
+    "api"
   ],
   "exclude": ["node_modules", "dist"]
 }
