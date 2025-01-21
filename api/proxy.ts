@@ -1,28 +1,21 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import fetch from 'node-fetch';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const { endpoint } = req.query;
+export default async (req: any, res: any) => {
+  const { url } = req.query;
 
-  if (!endpoint || Array.isArray(endpoint)) {
-    res.status(400).json({ error: 'Invalid or missing endpoint parameter' });
-    return;
+  if (!url) {
+    return res.status(400).json({ error: 'Missing "url" query parameter' });
   }
 
   try {
-    const targetUrl = `https://itunes.apple.com${endpoint}`;
-    const response = await fetch(targetUrl);
-
-    if (!response.ok) {
-      res
-        .status(response.status)
-        .json({ error: `Failed to fetch: ${response.statusText}` });
-      return;
-    }
-
+    const response = await fetch(url); // Use node-fetch here
     const data = await response.json();
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.status(200).json(data);
   } catch (error) {
-    console.error('Error in proxy:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Proxy Error:', error);
+    res.status(500).json({ error: 'Failed to fetch data' });
   }
-}
+};

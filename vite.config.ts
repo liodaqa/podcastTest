@@ -7,7 +7,8 @@ export default defineConfig(({ mode }) => ({
   server: {
     proxy: {
       '/api': {
-        target: 'http://itunes.apple.com',
+        // target: 'http://itunes.apple.com',
+        target: 'http://localhost:3000', // Proxy to your local Vercel serverless function
 
         // target: 'http://localhost:5173',
         changeOrigin: true,
