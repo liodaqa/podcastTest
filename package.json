@@ -17,6 +17,7 @@
     "clean": "rm -rf src/**/*.js src/**/*.test.js dist"
   },
   "dependencies": {
+    "@vercel/node": "^5.0.2",
     "crypto-js": "^4.2.0",
     "node-fetch": "^3.3.2",
     "react": "^18.3.1",

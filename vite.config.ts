@@ -1,21 +1,33 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig(({ mode }) => ({
   plugins: [react()],
   server: {
-    proxy:
-      mode === 'development'
-        ? {
-            '/api': {
-              // target: 'https://itunes.apple.com',
-              target: 'http://localhost:5173',
-              changeOrigin: true,
-              rewrite: (path) => path.replace(/^\/api/, ''),
-            },
-          }
-        : undefined,
+    proxy: {
+      '/api': {
+        target: 'http://itunes.apple.com',
+
+        // target: 'http://localhost:5173',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
   },
+  // server: {
+  //   proxy:
+  //     mode === 'development'
+  //       ? {
+  //           '/api': {
+  //             target: 'https://itunes.apple.com',
+  //             changeOrigin: true,
+  //             rewrite: (path) => path.replace(/^\/api/, ''),
+  //             // rewrite: (path) => path.replace(/^\/api/, '/get'),
+  //           },
+  //         }
+  //       : undefined,
+  // },
   build: {
     outDir: 'dist',
     sourcemap: false,
@@ -25,7 +37,7 @@ export default defineConfig(({ mode }) => ({
   },
   resolve: {
     alias: {
-      '@': '/src',
+      '@': path.resolve(__dirname, 'src'),
     },
   },
 }));
