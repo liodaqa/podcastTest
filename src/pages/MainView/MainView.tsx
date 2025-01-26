@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { usePodcastContext } from '../../context/PodcastContext';
+import styles from './MainView.module.css';
 import useFilteredPodcasts from '../../hooks/useFilteredPodcasts';
+import { usePodcastContext } from '../../context/PodcastContext';
+import ErrorMessage from '../../components/ErrorMessage/ErrorMessage';
 import SearchBar from '../../components/SearchInput/SearchInput';
 import PodcastList from '../../components/PodcastList/PodcastList';
-import ErrorMessage from '../../components/ErrorMessage/ErrorMessage';
-import styles from './MainView.module.css';
 
 const MainView: React.FC = () => {
-  const { podcasts, error } = usePodcastContext();
+  const { podcasts, error, globalLoading } = usePodcastContext();
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredPodcasts = useFilteredPodcasts(podcasts, searchTerm);
 
-  const isFetching = !podcasts || podcasts.length === 0;
+  const isFetching = globalLoading || !podcasts || podcasts.length === 0;
 
   if (error) {
     return <ErrorMessage message={error} />;
@@ -30,7 +30,7 @@ const MainView: React.FC = () => {
       </div>
 
       {filteredPodcasts.length > 0 || searchTerm === '' ? (
-        <PodcastList podcasts={filteredPodcasts} />
+        <PodcastList podcasts={filteredPodcasts} isLoading={isFetching} />
       ) : (
         <div className={styles.noResults}>
           <img

@@ -1,16 +1,16 @@
 import React, { useEffect, lazy } from 'react';
 import { useParams } from 'react-router-dom';
+const PodcastCard = lazy(() => import('@/components/PodcastCard/PodcastCard'));
+import styles from './PodcastDetail.module.css';
 import { usePodcastContext } from '../../context/PodcastContext';
 import EpisodeTable from '../../components/EpisodeTable/EpisodeTable';
-const PodcastCard = lazy(
-  () => import('../../components/PodcastCard/PodcastCard')
-);
 import ErrorMessage from '../../components/ErrorMessage/ErrorMessage';
-import styles from './PodcastDetail.module.css';
+import PodcastDetailSkeleton from '../../components/Skeleton/PodcastDetailSkeleton/PodcastDetailSkeleton';
 
 const PodcastDetail: React.FC = () => {
   const { podcastId } = useParams<{ podcastId: string }>();
-  const { podcastDetail, fetchPodcastDetail, error } = usePodcastContext();
+  const { podcastDetail, fetchPodcastDetail, error, globalLoading } =
+    usePodcastContext();
 
   useEffect(() => {
     if (podcastId) {
@@ -24,8 +24,8 @@ const PodcastDetail: React.FC = () => {
     return <ErrorMessage message={error} />;
   }
 
-  if (!isDataValid) {
-    return null;
+  if (globalLoading || !isDataValid) {
+    return <PodcastDetailSkeleton />;
   }
 
   const episodes = podcastDetail?.episodes || [];

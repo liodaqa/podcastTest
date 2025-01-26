@@ -1,0 +1,404 @@
+/* @import '@/styles/variables.css';
+
+.podcastSkeleton {
+  box-shadow: var(--box-shadow);
+  padding-top: 60px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.imageWrapper {
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--color-lighter-grey);
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  animation: shimmer 1.5s infinite ease-in-out;
+}
+
+.details {
+  margin-top: 60px;
+}
+
+.title,
+.author {
+  background-color: var(--color-lighter-grey);
+  height: 16px;
+  margin: 10px auto;
+  width: 80%;
+  border-radius: 4px;
+  animation: shimmer 1.5s infinite ease-in-out;
+}
+
+.title {
+  width: 60%;
+  height: 20px;
+}
+
+.author {
+  width: 40%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: 200px 0;
+  }
+} */
+
+/* @import '@/styles/variables.css';
+
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5rem;
+  padding: 1.9rem 6rem;
+  align-items: flex-start;
+}
+
+.sidebar {
+  flex: 1;
+  max-width: 300px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.imageSkeleton {
+  width: 100%;
+  height: 300px;
+  background-color: var(--color-light-grey);
+  border-radius: var(--border-radius);
+}
+
+.textSkeleton {
+  height: 20px;
+  background-color: var(--color-light-grey);
+  border-radius: var(--border-radius);
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--color-lighter-grey);
+  margin: 1rem 0;
+}
+
+.content {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-medium);
+  max-width: 100%;
+  width: 100%;
+}
+
+.episodesTitleSkeleton {
+  width: 30%;
+  height: 30px;
+  background-color: var(--color-light-grey);
+  border-radius: var(--border-radius);
+}
+
+.tableSkeleton {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tableRowSkeleton {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cellSkeleton {
+  height: 20px;
+  background-color: var(--color-light-grey);
+  border-radius: var(--border-radius);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem 2rem;
+    gap: 2rem;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sidebar {
+    max-width: 100%;
+    margin-bottom: 1.5rem;
+  }
+
+  .content {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 1rem;
+    gap: 1.5rem;
+  }
+
+  .sidebar {
+    margin-bottom: 1rem;
+  }
+} */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* General Container */
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5rem;
+  padding: 1.9rem 6rem;
+  align-items: flex-start;
+}
+
+/* Sidebar Skeleton */
+.sidebar {
+  flex: 1;
+  max-width: 300px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.imageSkeleton {
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(90deg, #e0e0e0, #f5f5f5, #e0e0e0);
+  background-size: 200%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+.textSkeleton {
+  height: 16px;
+  background: linear-gradient(90deg, #e0e0e0, #f5f5f5, #e0e0e0);
+  background-size: 200%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+.divider {
+  height: 1px;
+  width: 100%;
+  background-color: #ddd;
+  margin: 8px 0;
+}
+
+/* Content Skeleton */
+.content {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-medium);
+  max-width: 100%;
+  width: 100%;
+}
+
+.episodesTitleSkeleton {
+  height: 24px;
+  width: 100%; /* Full width */
+  background: linear-gradient(90deg, #e0e0e0, #f5f5f5, #e0e0e0);
+  background-size: 200%;
+  animation: shimmer 1.5s infinite;
+  margin-bottom: 24px;
+  border-radius: 4px;
+}
+
+.tableSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%; /* Full width */
+}
+
+.tableHeaderSkeleton,
+.tableRowSkeleton {
+  display: flex;
+  gap: 64px; /* Large gap between cells */
+  width: 100%; /* Ensure the row takes up full width */
+}
+
+.cellSkeleton {
+  height: 16px;
+  background: linear-gradient(90deg, #e0e0e0, #f5f5f5, #e0e0e0);
+  background-size: 200%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+  flex: 1; /* This allows the cells to evenly distribute space */
+}
+
+/* Shimmer Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200%;
+  }
+  100% {
+    background-position: 200%;
+  }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem 2rem;
+    gap: 2rem;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sidebar {
+    max-width: 100%;
+    margin-bottom: 1.5rem;
+  }
+
+  .content {
+    max-width: 100%;
+  }
+
+  .episodesTitleSkeleton {
+    width: 100%; /* Full width on mobile */
+  }
+
+  .tableHeaderSkeleton,
+  .tableRowSkeleton {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%; /* Full width */
+  }
+
+  .cellSkeleton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 1rem;
+    gap: 1.5rem;
+  }
+
+  .sidebar {
+    margin-bottom: 1rem;
+  }
+
+  .episodesTitleSkeleton {
+    width: 100%; /* Full width on mobile */
+  }
+
+  .tableHeaderSkeleton,
+  .tableRowSkeleton {
+    flex-direction: column;
+    gap: 6px;
+    width: 100%; /* Full width */
+  }
+
+  .cellSkeleton {
+    width: 100%;
+  }
+
+  .episodeTableWrapper {
+    padding: 0.5rem;
+  }
+}
+
+/* .container {
+  display: flex;
+  gap: 24px;
+  padding: 16px;
+  background-color: var(--color-background-light);
+  border-radius: 8px;
+}
+
+.sidebar {
+  width: 25%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.imageSkeleton {
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(90deg, #e0e0e0, #f5f5f5, #e0e0e0);
+  background-size: 200%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+.textSkeleton {
+  height: 16px;
+  background: linear-gradient(90deg, #e0e0e0, #f5f5f5, #e0e0e0);
+  background-size: 200%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+.divider {
+  height: 1px;
+  width: 100%;
+  background-color: #ddd;
+  margin: 8px 0;
+}
+
+.content {
+  width: 75%;
+}
+
+.episodesTitleSkeleton {
+  height: 24px;
+  width: 40%;
+  background: linear-gradient(90deg, #e0e0e0, #f5f5f5, #e0e0e0);
+  background-size: 200%;
+  animation: shimmer 1.5s infinite;
+  margin-bottom: 24px;
+  border-radius: 4px;
+}
+
+.tableSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tableHeaderSkeleton,
+.tableRowSkeleton {
+  display: flex;
+  gap: 16px;
+}
+
+.cellSkeleton {
+  height: 16px;
+  background: linear-gradient(90deg, #e0e0e0, #f5f5f5, #e0e0e0);
+  background-size: 200%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200%;
+  }
+  100% {
+    background-position: 200%;
+  }
+} */

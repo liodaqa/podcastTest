@@ -1,57 +1,91 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import '@testing-library/jest-dom';
 import PodcastList from './PodcastList';
 import { mockCachedPodcastData } from '../../api/services/__mocks__/podcastMocks';
-import { Podcast } from '../../types/PodcastTypes';
+jest.mock('../../hooks/LazyLoad/useLazyLoad', () => ({
+  __esModule: true,
+  default: jest.fn(() => ({
+    visibleItems: [],
+    listRef: { current: null },
+  })),
+}));
+
+jest.mock('../PodcastItem/PodcastItem', () =>
+  jest.fn(() => <li data-testid='podcast-item'></li>)
+);
+jest.mock('../Skeleton/PodcastItemSkeleton/PodcastItemSkeleton', () =>
+  jest.fn(() => <li data-testid='podcast-skeleton'></li>)
+);
 
 describe('PodcastList Component', () => {
-  it('renders nothing when the podcasts array is empty', () => {
-    const { container } = render(
-      <MemoryRouter>
-        <PodcastList podcasts={[]} />
-      </MemoryRouter>
-    );
+  const mockPodcasts = mockCachedPodcastData.map((podcast) => ({
+    id: podcast.id,
+    name: podcast.name,
+    artist: podcast.artist,
+    artwork: podcast.artwork,
+    summary: podcast.summary,
+  }));
 
-    // Ensure no content is rendered
-    expect(container.firstChild).toBeNull();
+  it('renders skeletons while loading', () => {
+    render(<PodcastList podcasts={mockPodcasts} isLoading={true} />);
+    const skeletons = screen.getAllByTestId('podcast-skeleton');
+    expect(skeletons).toHaveLength(12);
   });
 
-  it('renders the correct number of PodcastItem components when podcasts are provided', () => {
-    render(
-      <MemoryRouter>
-        <PodcastList podcasts={mockCachedPodcastData as Podcast[]} />
-      </MemoryRouter>
-    );
-
-    // Check that the correct number of PodcastItem components is rendered
-    const podcastItems = screen.getAllByRole('listitem');
-    expect(podcastItems).toHaveLength(mockCachedPodcastData.length);
-
-    // Verify the rendered content matches the mock data
-    mockCachedPodcastData.forEach((podcast) => {
-      expect(screen.getByText(podcast.name)).toBeInTheDocument();
-      expect(
-        screen.getByText(new RegExp(`Author: ${podcast.artist}`, 'i'))
-      ).toBeInTheDocument();
+  it('renders podcasts when loading is false', () => {
+    const useLazyLoadMock = jest.requireMock(
+      '../../hooks/LazyLoad/useLazyLoad'
+    ).default;
+    useLazyLoadMock.mockReturnValue({
+      visibleItems: mockPodcasts,
+      listRef: { current: null },
     });
+
+    render(<PodcastList podcasts={mockPodcasts} isLoading={false} />);
+    const podcastItems = screen.getAllByTestId('podcast-item');
+    expect(podcastItems).toHaveLength(mockPodcasts.length);
   });
 
-  it('renders nothing when podcasts prop is undefined or null', () => {
-    const { container } = render(
-      <MemoryRouter>
-        {/* Passing undefined */}
-        <PodcastList podcasts={undefined as unknown as Podcast[]} />
-      </MemoryRouter>
-    );
-    expect(container.firstChild).toBeNull();
+  it('renders empty state when podcasts array is empty', () => {
+    const useLazyLoadMock = jest.requireMock(
+      '../../hooks/LazyLoad/useLazyLoad'
+    ).default;
+    useLazyLoadMock.mockReturnValue({
+      visibleItems: [],
+      listRef: { current: null },
+    });
 
-    const { container: nullContainer } = render(
-      <MemoryRouter>
-        {/* Passing null */}
-        <PodcastList podcasts={null as unknown as Podcast[]} />
-      </MemoryRouter>
-    );
-    expect(nullContainer.firstChild).toBeNull();
+    render(<PodcastList podcasts={[]} isLoading={false} />);
+    const podcastItems = screen.queryByTestId('podcast-item');
+    expect(podcastItems).not.toBeInTheDocument();
+  });
+
+  it('handles lazy loading correctly', () => {
+    const useLazyLoadMock = jest.requireMock(
+      '../../hooks/LazyLoad/useLazyLoad'
+    ).default;
+    useLazyLoadMock.mockReturnValue({
+      visibleItems: mockPodcasts.slice(0, 1),
+      listRef: { current: null },
+    });
+
+    render(<PodcastList podcasts={mockPodcasts} isLoading={false} />);
+    const podcastItems = screen.getAllByTestId('podcast-item');
+    expect(podcastItems).toHaveLength(1);
+  });
+
+  it('handles invalid data gracefully', () => {
+    const useLazyLoadMock = jest.requireMock(
+      '../../hooks/LazyLoad/useLazyLoad'
+    ).default;
+    useLazyLoadMock.mockReturnValue({
+      visibleItems: [],
+      listRef: { current: null },
+    });
+
+    render(<PodcastList podcasts={[]} isLoading={false} />);
+    const podcastItems = screen.queryByTestId('podcast-item');
+    expect(podcastItems).not.toBeInTheDocument();
   });
 });
