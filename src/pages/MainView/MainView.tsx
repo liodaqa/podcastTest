@@ -12,7 +12,7 @@ const MainView: React.FC = () => {
 
   const filteredPodcasts = useFilteredPodcasts(podcasts, searchTerm);
 
-  const isFetching = globalLoading || !podcasts || podcasts.length === 0;
+  const isFetching = !podcasts || podcasts.length === 0;
 
   if (error) {
     return <ErrorMessage message={error} />;
@@ -30,7 +30,7 @@ const MainView: React.FC = () => {
       </div>
 
       {filteredPodcasts.length > 0 || searchTerm === '' ? (
-        <PodcastList podcasts={filteredPodcasts} isLoading={isFetching} />
+        <PodcastList podcasts={filteredPodcasts} isLoading={globalLoading} />
       ) : (
         <div className={styles.noResults}>
           <img
