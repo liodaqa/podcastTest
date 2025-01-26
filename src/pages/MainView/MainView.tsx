@@ -7,7 +7,7 @@ import SearchBar from '../../components/SearchInput/SearchInput';
 import PodcastList from '../../components/PodcastList/PodcastList';
 
 const MainView: React.FC = () => {
-  const { podcasts, error, globalLoading } = usePodcastContext();
+  const { podcasts, error } = usePodcastContext();
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredPodcasts = useFilteredPodcasts(podcasts, searchTerm);
@@ -30,7 +30,7 @@ const MainView: React.FC = () => {
       </div>
 
       {filteredPodcasts.length > 0 || searchTerm === '' ? (
-        <PodcastList podcasts={filteredPodcasts} isLoading={globalLoading} />
+        <PodcastList podcasts={filteredPodcasts} />
       ) : (
         <div className={styles.noResults}>
           <img

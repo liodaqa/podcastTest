@@ -3,13 +3,15 @@ import PodcastItem from '../PodcastItem/PodcastItem';
 import PodcastListSkeleton from '../Skeleton/PodcastItemSkeleton/PodcastItemSkeleton';
 import styles from './PodcastList.module.css';
 import useLazyLoad from '../../hooks/LazyLoad/useLazyLoad';
+import { usePodcastContext } from '../../context/PodcastContext';
 
 interface PodcastListProps {
   podcasts: Podcast[];
-  isLoading: boolean;
 }
 
-const PodcastList: React.FC<PodcastListProps> = ({ podcasts, isLoading }) => {
+const PodcastList: React.FC<PodcastListProps> = ({ podcasts }) => {
+  const { globalLoading } = usePodcastContext();
+
   const { visibleItems: visiblePodcasts, listRef } = useLazyLoad<Podcast>(
     podcasts,
     16,
@@ -23,7 +25,7 @@ const PodcastList: React.FC<PodcastListProps> = ({ podcasts, isLoading }) => {
       onScroll={(e) => e.preventDefault()}
     >
       <ul className={styles.podcastList}>
-        {isLoading
+        {globalLoading
           ? Array.from({ length: 12 }).map((_, index) => (
               <PodcastListSkeleton key={`skeleton-${index}`} />
             ))
