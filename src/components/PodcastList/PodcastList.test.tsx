@@ -28,7 +28,7 @@ describe('PodcastList Component', () => {
   }));
 
   it('renders skeletons while loading', () => {
-    render(<PodcastList podcasts={mockPodcasts} isLoading={true} />);
+    render(<PodcastList podcasts={mockPodcasts} />);
     const skeletons = screen.getAllByTestId('podcast-skeleton');
     expect(skeletons).toHaveLength(12);
   });
@@ -42,7 +42,7 @@ describe('PodcastList Component', () => {
       listRef: { current: null },
     });
 
-    render(<PodcastList podcasts={mockPodcasts} isLoading={false} />);
+    render(<PodcastList podcasts={mockPodcasts} />);
     const podcastItems = screen.getAllByTestId('podcast-item');
     expect(podcastItems).toHaveLength(mockPodcasts.length);
   });
@@ -56,7 +56,7 @@ describe('PodcastList Component', () => {
       listRef: { current: null },
     });
 
-    render(<PodcastList podcasts={[]} isLoading={false} />);
+    render(<PodcastList podcasts={[]} />);
     const podcastItems = screen.queryByTestId('podcast-item');
     expect(podcastItems).not.toBeInTheDocument();
   });
@@ -70,7 +70,7 @@ describe('PodcastList Component', () => {
       listRef: { current: null },
     });
 
-    render(<PodcastList podcasts={mockPodcasts} isLoading={false} />);
+    render(<PodcastList podcasts={mockPodcasts} />);
     const podcastItems = screen.getAllByTestId('podcast-item');
     expect(podcastItems).toHaveLength(1);
   });
@@ -84,7 +84,7 @@ describe('PodcastList Component', () => {
       listRef: { current: null },
     });
 
-    render(<PodcastList podcasts={[]} isLoading={false} />);
+    render(<PodcastList podcasts={[]} />);
     const podcastItems = screen.queryByTestId('podcast-item');
     expect(podcastItems).not.toBeInTheDocument();
   });
