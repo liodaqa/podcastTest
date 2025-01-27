@@ -36,13 +36,20 @@
 // };
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
+/**
+ * Fetch data from the configured API.
+ * @param endpoint - Relative endpoint (e.g., `/us/rss/toppodcasts/limit=100/genre=1310/json`).
+ * @param options - Additional fetch options.
+ * @param timeout - Timeout in milliseconds for the request (default: 10 seconds).
+ * @returns Parsed JSON response.
+ */
 export const apiClient = async <T>(
   endpoint: string,
   options: RequestInit = {},
   timeout = 10000
 ): Promise<T> => {
   if (!endpoint) {
-    throw new Error('Endpoint cannot be empty');
+    throw new Error('[API Client] Endpoint cannot be empty.');
   }
 
   const isProduction = import.meta.env.MODE === 'production';
@@ -52,9 +59,11 @@ export const apiClient = async <T>(
 
   console.log('[API Client] Final URL used in request:', fullUrl);
 
+  // AbortController for timeout handling
   const controller = new AbortController();
   const signal = controller.signal;
 
+  // Set a timeout to abort the request
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
@@ -68,12 +77,19 @@ export const apiClient = async <T>(
       );
     }
 
-    const data = await response.json();
+    const textResponse = await response.text(); // Get raw response as text
+    console.log('[API Client] Raw Response:', textResponse);
 
+    const data = JSON.parse(textResponse);
+
+    // In production, handle `contents` field if using a proxy service like allorigins.win
     if (isProduction && data.contents) {
+      console.log('[API Client] Parsed contents:', data.contents);
       return JSON.parse(data.contents) as T;
     }
 
+    // Validate and return the parsed data
+    validateResponse(data, endpoint);
     return data as T;
   } catch (error) {
     clearTimeout(timeoutId);
@@ -89,6 +105,26 @@ export const apiClient = async <T>(
     }
 
     throw error;
+  }
+};
+
+/**
+ * Validate the API response structure to ensure completeness.
+ * @param data - The parsed API response.
+ * @param endpoint - The endpoint for logging.
+ */
+const validateResponse = (data: any, endpoint: string): void => {
+  if (!data || typeof data !== 'object') {
+    throw new Error(
+      `[API Client] Invalid response format for endpoint: ${endpoint}`
+    );
+  }
+
+  if (!data.feed || !data.feed.entry) {
+    console.warn(
+      '[API Client] Response might be incomplete. Missing feed or entry:',
+      data
+    );
   }
 };
 
