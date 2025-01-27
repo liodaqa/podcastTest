@@ -11,11 +11,13 @@
 }
 
 .podcastListWrapper {
+  overflow-x: auto;
   overflow-y: auto;
   padding-top: 55px;
   height: 80vh;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  width: 100%;
 }
 
 .podcastListWrapper::-webkit-scrollbar {

@@ -65,16 +65,8 @@ const PodcastList: React.FC<PodcastListProps> = ({ podcasts, isLoading }) => {
     20
   );
 
-  console.log('PodcastList -> isLoading:', isLoading);
-  console.log('PodcastList -> podcasts:', podcasts);
-  console.log('PodcastList -> visiblePodcasts:', visiblePodcasts);
-
   return (
-    <div
-      ref={listRef}
-      className={styles.podcastListWrapper}
-      onScroll={(e) => e.preventDefault()}
-    >
+    <div ref={listRef} className={styles.podcastListWrapper}>
       <ul className={styles.podcastList}>
         {isLoading
           ? Array.from({ length: 12 }).map((_, index) => (
