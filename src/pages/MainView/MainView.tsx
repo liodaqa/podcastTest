@@ -61,8 +61,8 @@ const MainView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const filteredPodcasts = useFilteredPodcasts(podcasts, searchTerm);
 
-  const isFetching = globalLoading || !podcasts || podcasts.length === 0;
-
+  // const isFetching = globalLoading || !podcasts || podcasts.length === 0;
+  const isFetching = globalLoading;
   if (error) {
     return <ErrorMessage message={error} />;
   }
@@ -77,6 +77,8 @@ const MainView: React.FC = () => {
       <PodcastList
         podcasts={isFetching ? [] : filteredPodcasts}
         isLoading={isFetching}
+        // podcasts={isFetching ? [] : filteredPodcasts}
+        // isLoading={isFetching}
       />
 
       {!isFetching && filteredPodcasts.length === 0 && searchTerm !== '' && (
