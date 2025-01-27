@@ -106,6 +106,9 @@ import { Podcast, DetailedPodcast, Episode } from '../../types/PodcastTypes';
 const CACHE_DURATION = 86400000; // 24 hours
 const PODCASTS_ENDPOINT = '/us/rss/toppodcasts/limit=100/genre=1310/json';
 
+console.log('[PodcastService] Environment:', import.meta.env.MODE);
+console.log('[PodcastService] Fetching podcasts from:', PODCASTS_ENDPOINT);
+
 /**
  * Helper function to add timeout handling to API requests.
  */
@@ -123,15 +126,9 @@ const fetchWithTimeout = async <T>(
  * Fetch all podcasts.
  * This function fetches and returns the transformed list of podcasts.
  */
-export const fetchPodcasts = async (
-  forceRefresh = false
-): Promise<Podcast[]> => {
+export const fetchPodcasts = async (): Promise<Podcast[]> => {
   const cacheKey = 'podcasts';
-  const cachedData = getCachedData<Podcast[]>(
-    cacheKey,
-    CACHE_DURATION,
-    forceRefresh
-  );
+  const cachedData = getCachedData<Podcast[]>(cacheKey, CACHE_DURATION);
 
   if (cachedData) {
     console.info('[PodcastService] Returning cached podcasts.');
@@ -139,9 +136,9 @@ export const fetchPodcasts = async (
   }
 
   try {
-    const rawData = await fetchWithTimeout(
-      apiClient<{ feed: { entry: any[] } }>(PODCASTS_ENDPOINT),
-      10000 // 10 seconds timeout
+    // Attempt to fetch data from the API
+    const rawData = await apiClient<{ feed: { entry: any[] } }>(
+      PODCASTS_ENDPOINT
     );
 
     if (!rawData?.feed?.entry) {
@@ -160,7 +157,20 @@ export const fetchPodcasts = async (
     return podcasts;
   } catch (error) {
     console.error('[PodcastService] Error fetching podcasts:', error);
-    throw error;
+
+    // If API fails, use the fallback JSON data
+    try {
+      const fallbackResponse = await fetch('/fallback-podcasts.json');
+      const fallbackData: Podcast[] = await fallbackResponse.json();
+      console.info('[PodcastService] Using fallback data.');
+      return fallbackData;
+    } catch (fallbackError) {
+      console.error(
+        '[PodcastService] Fallback data failed to load:',
+        fallbackError
+      );
+      throw fallbackError;
+    }
   }
 };
 
