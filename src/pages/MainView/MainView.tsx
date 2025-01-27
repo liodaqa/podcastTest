@@ -7,20 +7,23 @@ import SearchBar from '../../components/SearchInput/SearchInput';
 import PodcastList from '../../components/PodcastList/PodcastList';
 
 const MainView: React.FC = () => {
-  const { podcasts, error } = usePodcastContext();
+  const { podcasts, error, globalLoading } = usePodcastContext();
   const [searchTerm, setSearchTerm] = useState('');
-
   const filteredPodcasts = useFilteredPodcasts(podcasts, searchTerm);
 
-  const isFetching = !podcasts || podcasts.length === 0;
+  // const isFetching = globalLoading || !podcasts || podcasts.length === 0;
+  // console.log('MainView -> globalLoading:', globalLoading);
+  // console.log('MainView -> podcasts:', podcasts);
+  // console.log('MainView -> filteredPodcasts:', filteredPodcasts);
+  // console.log('MainView -> isFetching:', isFetching);
 
   if (error) {
     return <ErrorMessage message={error} />;
   }
 
-  if (isFetching) {
-    return null;
-  }
+  // if (isFetching) {
+  //   return null;
+  // }
 
   return (
     <div className={styles.container}>
@@ -30,7 +33,7 @@ const MainView: React.FC = () => {
       </div>
 
       {filteredPodcasts.length > 0 || searchTerm === '' ? (
-        <PodcastList podcasts={filteredPodcasts} />
+        <PodcastList podcasts={filteredPodcasts} isLoading={globalLoading} />
       ) : (
         <div className={styles.noResults}>
           <img
@@ -48,3 +51,40 @@ const MainView: React.FC = () => {
 };
 
 export default MainView;
+// import React, { useState } from 'react';
+// import styles from './MainView.module.css';
+// import useFilteredPodcasts from '../../hooks/useFilteredPodcasts';
+// import { usePodcastContext } from '../../context/PodcastContext';
+// import ErrorMessage from '../../components/ErrorMessage/ErrorMessage';
+// import SearchBar from '../../components/SearchInput/SearchInput';
+// import PodcastList from '../../components/PodcastList/PodcastList';
+
+// const MainView: React.FC = () => {
+//   const { podcasts, error, globalLoading } = usePodcastContext();
+//   const [searchTerm, setSearchTerm] = useState('');
+//   const filteredPodcasts = useFilteredPodcasts(podcasts, searchTerm);
+
+//   const isFetching = !podcasts || podcasts.length === 0;
+
+//   if (error) {
+//     return <ErrorMessage message={error} />;
+//   }
+
+//   return (
+//     <div className={styles.container}>
+//       <div className={styles.searchContainer}>
+//         <span className={styles.count}>
+//           {globalLoading ? 0 : filteredPodcasts.length}
+//         </span>
+//         <SearchBar onSearch={setSearchTerm} />
+//       </div>
+
+//       <PodcastList
+//         podcasts={filteredPodcasts}
+//         isLoading={globalLoading || podcasts.length === 0}
+//       />
+//     </div>
+//   );
+// };
+
+// export default MainView;
