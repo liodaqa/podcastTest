@@ -11,19 +11,11 @@ const MainView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const filteredPodcasts = useFilteredPodcasts(podcasts, searchTerm);
 
-  // const isFetching = globalLoading || !podcasts || podcasts.length === 0;
-  // console.log('MainView -> globalLoading:', globalLoading);
-  // console.log('MainView -> podcasts:', podcasts);
-  // console.log('MainView -> filteredPodcasts:', filteredPodcasts);
-  // console.log('MainView -> isFetching:', isFetching);
+  const isFetching = globalLoading || !podcasts || podcasts.length === 0;
 
   if (error) {
     return <ErrorMessage message={error} />;
   }
-
-  // if (isFetching) {
-  //   return null;
-  // }
 
   return (
     <div className={styles.container}>
@@ -33,7 +25,10 @@ const MainView: React.FC = () => {
       </div>
 
       {filteredPodcasts.length > 0 || searchTerm === '' ? (
-        <PodcastList podcasts={filteredPodcasts} isLoading={globalLoading} />
+        <PodcastList
+          podcasts={isFetching ? [] : filteredPodcasts}
+          isLoading={isFetching}
+        />
       ) : (
         <div className={styles.noResults}>
           <img
