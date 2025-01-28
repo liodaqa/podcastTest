@@ -29,22 +29,22 @@
 //         <SearchBar onSearch={setSearchTerm} />
 //       </div>
 
-//       {filteredPodcasts.length > 0 || searchTerm === '' ? (
-//         <PodcastList podcasts={filteredPodcasts} />
-//       ) : (
-//         <div className={styles.noResults}>
-//           <img
-//             src='/noResults.png'
-//             alt='No results found'
-//             className={styles.noResultsImage}
-//           />
-//           <p className={styles.noResultsText}>
-//             No podcasts found for (<strong>{searchTerm}</strong>)
-//           </p>
-//         </div>
-//       )}
-//     </div>
-//   );
+//     {filteredPodcasts.length > 0 || searchTerm === '' ? (
+//       <PodcastList podcasts={filteredPodcasts} />
+//     ) : (
+//       <div className={styles.noResults}>
+//         <img
+//           src='/noResults.png'
+//           alt='No results found'
+//           className={styles.noResultsImage}
+//         />
+//         <p className={styles.noResultsText}>
+//           No podcasts found for (<strong>{searchTerm}</strong>)
+//         </p>
+//       </div>
+//     )}
+//   </div>
+// );
 // };
 
 // export default MainView;
