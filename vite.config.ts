@@ -25,35 +25,33 @@
 //     },
 //   },
 // }));
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'path';
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), 'VITE_');
-
-  return {
-    define: {
-      'import.meta.env': env,
-    },
-    server: {
-      port: 3000,
-      open: true,
-      proxy: {
-        '/api': {
-          target: 'https://itunes.apple.com', // The CORS proxy
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, '/'), // Rewrite /api to /get for allorigins.win
-        },
+export default defineConfig(({ mode }) => ({
+  plugins: [react(), tsconfigPaths()],
+  server: {
+    port: 3000,
+    proxy: {
+      '/api': {
+        target: 'https://itunes.apple.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
-    resolve: {
-      alias: {
-        '@': path.resolve(__dirname, './src'),
-      },
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+  },
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(mode),
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
     },
-    build: {
-      outDir: 'dist',
-      sourcemap: mode === 'development',
-    },
-  };
-});
+  },
+}));
