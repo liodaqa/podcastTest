@@ -40,9 +40,9 @@ export default defineConfig(({ mode }) => {
       open: true,
       proxy: {
         '/api': {
-          target: 'https://allorigins.win', // The CORS proxy
+          target: 'https://itunes.apple.com', // The CORS proxy
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, '/get'), // Rewrite /api to /get for allorigins.win
+          rewrite: (path) => path.replace(/^\/api/, '/'), // Rewrite /api to /get for allorigins.win
         },
       },
     },
