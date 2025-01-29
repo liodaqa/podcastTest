@@ -9,7 +9,7 @@ import PodcastDetailSkeleton from '../../components/Skeleton/PodcastDetailSkelet
 
 const PodcastDetail: React.FC = () => {
   const { podcastId } = useParams<{ podcastId: string }>();
-  const { podcastDetail, fetchPodcastDetail, error, detailLoading } =
+  const { podcastDetail, fetchPodcastDetail, error, globalLoading } =
     usePodcastContext();
 
   useEffect(() => {
@@ -24,7 +24,7 @@ const PodcastDetail: React.FC = () => {
     return <ErrorMessage message={error} />;
   }
 
-  if (detailLoading || !isDataValid) {
+  if (globalLoading || !isDataValid) {
     return <PodcastDetailSkeleton />;
   }
 
