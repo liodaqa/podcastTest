@@ -31,7 +31,7 @@
 //       name: item['im:name'].label,
 //       artist: item['im:artist'].label,
 //       artwork: item['im:image']?.[2]?.label || '',
-//       summary: item.summary?.label || 'No summary available',
+// summary: item.summary?.label || 'No summary available',
 //     }));
 
 //     setCachedData(cacheKey, podcasts);
@@ -182,31 +182,23 @@ export const fetchPodcastDetails = async (
     return cachedData;
   }
 
-  // If a fetch is already in progress, return the existing promise
+  // ✅ Ensure `fetchPodcastDetails` does not re-fetch `fetchPodcasts`
   if (await fetchPodcastDetailsPromises[podcastId]) {
     console.log(
       `[PodcastService] ⏳ Fetch already in progress for podcast ${podcastId}`
     );
-    return await fetchPodcastDetailsPromises[podcastId]; // FIX: Await the promise correctly
+    return await fetchPodcastDetailsPromises[podcastId];
   }
 
   console.time(`[PodcastService] FetchPodcastDetails ${podcastId}`);
 
-  fetchPodcastDetailsPromises[podcastId] = Promise.all([
-    apiClient<{ feed: { entry: any[] } }>(PODCASTS_ENDPOINT),
-    apiClient<{ results: any[] }>(
-      `/lookup?id=${podcastId}&entity=podcastEpisode`
-    ),
-  ])
-    .then(([allPodcasts, rawData]) => {
-      if (!rawData?.results?.length || !allPodcasts?.feed?.entry) {
+  fetchPodcastDetailsPromises[podcastId] = apiClient<{ results: any[] }>(
+    `/lookup?id=${podcastId}&entity=podcastEpisode`
+  )
+    .then((rawData) => {
+      if (!rawData?.results?.length) {
         throw new Error('Invalid podcast details or data format.');
       }
-
-      // Extract podcast summary from the full list
-      const podcastSummary = allPodcasts.feed.entry.find(
-        (entry) => entry.id.attributes['im:id'] === podcastId
-      )?.summary?.label;
 
       const podcastData = rawData.results[0];
 
@@ -217,7 +209,7 @@ export const fetchPodcastDetails = async (
         releaseDate: ep.releaseDate ?? 'Unknown Date',
         trackTimeMillis: ep.trackTimeMillis ?? 0,
         episodeUrl: ep.episodeUrl || '',
-        description: ep.description || 'No description available.', // FIX: Ensure description is included
+        description: ep.description || 'No description available.', // ✅ Ensure description exists
       }));
       console.timeEnd(`[PodcastService] TransformEpisodes ${podcastId}`);
 
@@ -226,7 +218,7 @@ export const fetchPodcastDetails = async (
         artworkUrl600: podcastData.artworkUrl600 || '',
         collectionName: podcastData.collectionName || 'Unknown Collection',
         artistName: podcastData.artistName || 'Unknown Artist',
-        summary: podcastSummary || 'No summary available',
+        summary: podcastData.description || 'No summary available',
         description: podcastData.description || 'No description available',
         episodes,
       };
@@ -239,7 +231,7 @@ export const fetchPodcastDetails = async (
       return podcastDetails;
     })
     .finally(() => {
-      delete fetchPodcastDetailsPromises[podcastId]; // Clear the Promise cache
+      delete fetchPodcastDetailsPromises[podcastId]; // ✅ Clear the Promise cache after completion
       console.timeEnd(`[PodcastService] FetchPodcastDetails ${podcastId}`);
     });
 
