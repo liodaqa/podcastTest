@@ -108,6 +108,8 @@ const PODCASTS_ENDPOINT = '/us/rss/toppodcasts/limit=100/genre=1310/json';
 
 // Global Promise cache to prevent duplicate API calls
 let fetchPodcastsPromise: Promise<Podcast[]> | null = null;
+let fetchPodcastDetailsPromises: { [key: string]: Promise<DetailedPodcast> } =
+  {};
 
 /**
  * Fetch all podcasts.
@@ -115,17 +117,17 @@ let fetchPodcastsPromise: Promise<Podcast[]> | null = null;
 export const fetchPodcasts = async (): Promise<Podcast[]> => {
   const cacheKey = 'podcasts';
 
-  // Check for cached data
+  // Check cache first
   const cachedData = getCachedData<Podcast[]>(cacheKey, CACHE_DURATION);
   if (cachedData) {
-    console.log('[PodcastService] Using cached podcasts.');
+    console.log('[PodcastService] ✅ Using cached podcasts.');
     return cachedData;
   }
 
   // If a fetch is already in progress, return the existing promise
   if (fetchPodcastsPromise) {
     console.log(
-      '[PodcastService] Fetch already in progress, returning existing Promise.'
+      '[PodcastService] ⏳ Fetch already in progress, returning existing Promise.'
     );
     return fetchPodcastsPromise;
   }
@@ -150,7 +152,7 @@ export const fetchPodcasts = async (): Promise<Podcast[]> => {
       }));
       console.timeEnd('[PodcastService] TransformPodcasts');
 
-      console.log('[PodcastService] Caching podcasts.');
+      console.log('[PodcastService] 🏆 Caching podcasts.');
       setCachedData(cacheKey, podcasts);
 
       return podcasts;
@@ -164,12 +166,6 @@ export const fetchPodcasts = async (): Promise<Podcast[]> => {
 };
 
 /**
- * Fetch details of a specific podcast, including its episodes.
- */
-const fetchPodcastDetailsPromises: { [key: string]: Promise<DetailedPodcast> } =
-  {};
-
-/**
  * Fetch details of a specific podcast.
  */
 export const fetchPodcastDetails = async (
@@ -177,11 +173,11 @@ export const fetchPodcastDetails = async (
 ): Promise<DetailedPodcast> => {
   const cacheKey = `podcast-${podcastId}`;
 
-  // Check for cached data
+  // Check cache first
   const cachedData = getCachedData<DetailedPodcast>(cacheKey, CACHE_DURATION);
   if (cachedData) {
     console.log(
-      `[PodcastService] Using cached details for podcast: ${podcastId}`
+      `[PodcastService] ✅ Using cached details for podcast: ${podcastId}`
     );
     return cachedData;
   }
@@ -189,9 +185,9 @@ export const fetchPodcastDetails = async (
   // If a fetch is already in progress, return the existing promise
   if (await fetchPodcastDetailsPromises[podcastId]) {
     console.log(
-      `[PodcastService] Fetch for podcast ${podcastId} already in progress.`
+      `[PodcastService] ⏳ Fetch already in progress for podcast ${podcastId}`
     );
-    return fetchPodcastDetailsPromises[podcastId];
+    return await fetchPodcastDetailsPromises[podcastId]; // FIX: Await the promise correctly
   }
 
   console.time(`[PodcastService] FetchPodcastDetails ${podcastId}`);
@@ -221,7 +217,7 @@ export const fetchPodcastDetails = async (
         releaseDate: ep.releaseDate ?? 'Unknown Date',
         trackTimeMillis: ep.trackTimeMillis ?? 0,
         episodeUrl: ep.episodeUrl || '',
-        description: ep.description || 'No description available.',
+        description: ep.description || 'No description available.', // FIX: Ensure description is included
       }));
       console.timeEnd(`[PodcastService] TransformEpisodes ${podcastId}`);
 
@@ -235,7 +231,9 @@ export const fetchPodcastDetails = async (
         episodes,
       };
 
-      console.log(`[PodcastService] Caching details for podcast: ${podcastId}`);
+      console.log(
+        `[PodcastService] 🏆 Caching details for podcast: ${podcastId}`
+      );
       setCachedData(cacheKey, podcastDetails);
 
       return podcastDetails;
