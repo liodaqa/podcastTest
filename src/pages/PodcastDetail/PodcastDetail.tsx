@@ -24,7 +24,7 @@ const PodcastDetail: React.FC = () => {
     return <ErrorMessage message={error} />;
   }
 
-  if (globalLoading || !isDataValid) {
+  if (globalLoading) {
     return <PodcastDetailSkeleton />;
   }
 
