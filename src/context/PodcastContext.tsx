@@ -53,21 +53,52 @@ export const PodcastProvider: React.FC<PodcastProviderProps> = ({
 
     fetchAllPodcasts();
   }, []);
+  const fetchPodcastDetail = useCallback(
+    async (id: string) => {
+      // ✅ Prevent unnecessary API calls if data is already cached
+      if (podcastDetail?.id === id) {
+        console.log(
+          `[PodcastProvider] ✅ Using cached podcast detail for ${id}`
+        );
+        return;
+      }
 
-  const fetchPodcastDetail = useCallback(async (id: string) => {
-    try {
-      setGlobalLoading(true);
-      const detail = await fetchPodcastDetails(id);
-      setPodcastDetail(detail);
-      setError(null);
-    } catch (err) {
-      console.error('Failed to fetch podcast details:', err);
-      setError('Unable to fetch podcast details.');
-      setPodcastDetail(null);
-    } finally {
-      setGlobalLoading(false);
-    }
-  }, []);
+      try {
+        setGlobalLoading(true);
+        const detail = await fetchPodcastDetails(id);
+        setPodcastDetail(detail);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch podcast details:', err);
+        setError('Unable to fetch podcast details.');
+        setPodcastDetail(null);
+      } finally {
+        setGlobalLoading(false);
+      }
+    },
+    [podcastDetail]
+  );
+
+  // const fetchPodcastDetail = useCallback(async (id: string) => {
+  //   if (podcastDetail?.id === id) {
+  //     console.log(
+  //       `[PodcastProvider] ✅ Using cached podcast detail for hamza ${id}`
+  //     );
+  //     return;
+  //   }
+  //   try {
+  //     setGlobalLoading(true);
+  //     const detail = await fetchPodcastDetails(id);
+  //     setPodcastDetail(detail);
+  //     setError(null);
+  //   } catch (err) {
+  //     console.error('Failed to fetch podcast details:', err);
+  //     setError('Unable to fetch podcast details.');
+  //     setPodcastDetail(null);
+  //   } finally {
+  //     setGlobalLoading(false);
+  //   }
+  // }, []);
 
   return (
     <PodcastContext.Provider

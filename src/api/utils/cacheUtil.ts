@@ -98,75 +98,119 @@
 //     console.error('[CacheUtils] Failed to store data in cache:', error);
 //   }
 // };
-import CryptoJS from 'crypto-js';
-
-const IS_PRODUCTION = import.meta.env.MODE === 'production';
-
-const SECRET_KEY = IS_PRODUCTION
-  ? import.meta.env.VITE_SECRET_KEY ||
-    (() => {
-      throw new Error('Missing VITE_SECRET_KEY in production environment!');
-    })()
-  : null;
-
-const encrypt = (data: string): string => {
-  if (!IS_PRODUCTION) return data; // Skip encryption in development
-  return CryptoJS.AES.encrypt(data, SECRET_KEY!).toString();
-};
-
-const decrypt = (cipher: string): string => {
-  if (!IS_PRODUCTION) return cipher; // Skip decryption in development
-  try {
-    return CryptoJS.AES.decrypt(cipher, SECRET_KEY!).toString(
-      CryptoJS.enc.Utf8
-    );
-  } catch (error) {
-    console.error('[CacheUtils] Decryption failed:', error);
-    return '';
-  }
-};
-
-const hashKey = (key: string): string => {
-  if (!IS_PRODUCTION) return key; // Skip hashing in development
-  return CryptoJS.SHA256(key).toString();
-};
-
+/**
+ * Retrieve cached data from localStorage with type safety.
+ */
 export const getCachedData = <T>(key: string, duration: number): T | null => {
-  const storageKey = hashKey(key);
-  const cached = localStorage.getItem(storageKey);
+  const cached = localStorage.getItem(key);
   if (!cached) return null;
 
   try {
-    const decrypted = decrypt(cached);
-    const { data, timestamp } = JSON.parse(decrypted) as {
+    const { data, timestamp } = JSON.parse(cached) as {
       data: T;
       timestamp: number;
     };
 
     if (Date.now() - timestamp > duration) {
-      localStorage.removeItem(storageKey);
+      console.warn(`[CacheUtils] ⏳ Cache expired for key: ${key}`);
+      localStorage.removeItem(key);
       return null;
     }
 
     return data;
   } catch (error) {
-    console.error('[CacheUtils] Failed to retrieve cached data:', error);
-    localStorage.removeItem(storageKey);
+    console.error('[CacheUtils] ❌ Failed to retrieve cached data:', error);
+    localStorage.removeItem(key);
     return null;
   }
 };
 
+/**
+ * Store data in localStorage with a timestamp for expiration.
+ */
 export const setCachedData = <T>(key: string, data: T): void => {
   try {
-    const storageKey = hashKey(key);
     const cache = {
       data,
       timestamp: Date.now(),
     };
 
-    const encrypted = encrypt(JSON.stringify(cache));
-    localStorage.setItem(storageKey, encrypted);
+    localStorage.setItem(key, JSON.stringify(cache));
+    console.log(`[CacheUtils] ✅ Stored data for key: ${key}`);
   } catch (error) {
-    console.error('[CacheUtils] Failed to store data in cache:', error);
+    console.error('[CacheUtils] ❌ Failed to store data in cache:', error);
   }
 };
+
+// import CryptoJS from 'crypto-js';
+
+// const IS_PRODUCTION = import.meta.env.MODE === 'production';
+
+// const SECRET_KEY = IS_PRODUCTION
+//   ? import.meta.env.VITE_SECRET_KEY ||
+//     (() => {
+//       throw new Error('Missing VITE_SECRET_KEY in production environment!');
+//     })()
+//   : null;
+
+// const encrypt = (data: string): string => {
+//   if (!IS_PRODUCTION) return data; // Skip encryption in development
+//   return CryptoJS.AES.encrypt(data, SECRET_KEY!).toString();
+// };
+
+// const decrypt = (cipher: string): string => {
+//   if (!IS_PRODUCTION) return cipher; // Skip decryption in development
+//   try {
+//     return CryptoJS.AES.decrypt(cipher, SECRET_KEY!).toString(
+//       CryptoJS.enc.Utf8
+//     );
+//   } catch (error) {
+//     console.error('[CacheUtils] Decryption failed:', error);
+//     return '';
+//   }
+// };
+
+// const hashKey = (key: string): string => {
+//   if (!IS_PRODUCTION) return key; // Skip hashing in development
+//   return CryptoJS.SHA256(key).toString();
+// };
+
+// export const getCachedData = <T>(key: string, duration: number): T | null => {
+//   const storageKey = hashKey(key);
+//   const cached = localStorage.getItem(storageKey);
+//   if (!cached) return null;
+
+//   try {
+//     const decrypted = decrypt(cached);
+//     const { data, timestamp } = JSON.parse(decrypted) as {
+//       data: T;
+//       timestamp: number;
+//     };
+
+//     if (Date.now() - timestamp > duration) {
+//       localStorage.removeItem(storageKey);
+//       return null;
+//     }
+
+//     return data;
+//   } catch (error) {
+//     console.error('[CacheUtils] Failed to retrieve cached data:', error);
+//     localStorage.removeItem(storageKey);
+//     return null;
+//   }
+// };
+
+// export const setCachedData = <T>(key: string, data: T): void => {
+//   try {
+//     const storageKey = hashKey(key);
+//     const cache = {
+//       data,
+//       timestamp: Date.now(),
+//     };
+
+//     const encrypted = encrypt(JSON.stringify(cache));
+//     localStorage.setItem(storageKey, encrypted);
+//   } catch (error) {
+//     console.error('[CacheUtils] Failed to store data in cache:', error);
+//   }
+// };

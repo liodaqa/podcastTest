@@ -18,7 +18,19 @@ declare global {
     }
   }
 }
+declare module 'async-retry' {
+  export type Options = {
+    retries?: number;
+    factor?: number;
+    minTimeout?: number;
+    maxTimeout?: number;
+  };
 
+  export default function retry<T>(
+    fn: (iteration: number) => Promise<T>,
+    opts?: Options
+  ): Promise<T>;
+}
 declare module 'crypto-js' {
   const content: any;
   export default content;

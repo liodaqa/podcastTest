@@ -33,25 +33,25 @@ import path from 'path';
 export default defineConfig(({ mode }) => ({
   plugins: [react(), tsconfigPaths()],
   server: {
-    port: 3000,
     proxy: {
       '/api': {
         target: 'https://itunes.apple.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
+        secure: true, // Ensure SSL is respected
       },
     },
   },
   build: {
     outDir: 'dist',
-    sourcemap: false,
-  },
-  define: {
-    'process.env.NODE_ENV': JSON.stringify(mode),
+    sourcemap: mode === 'development', // Enable sourcemaps only for development
   },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
     },
+  },
+  define: {
+    'process.env.NODE_ENV': `"${mode}"`,
   },
 }));
