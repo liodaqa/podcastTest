@@ -49,9 +49,10 @@
 import React from 'react';
 import { Podcast } from '@/types/PodcastTypes';
 import PodcastItem from '../PodcastItem/PodcastItem';
+import ErrorMessage from '../ErrorMessage/ErrorMessage';
+import { usePodcastContext } from '@/context/PodcastContext';
 import PodcastListSkeleton from '../Skeleton/PodcastItemSkeleton/PodcastItemSkeleton';
 import styles from './PodcastList.module.css';
-import useLazyLoad from '../../hooks/LazyLoad/useLazyLoad';
 
 interface PodcastListProps {
   podcasts: Podcast[];
@@ -59,20 +60,18 @@ interface PodcastListProps {
 }
 
 const PodcastList: React.FC<PodcastListProps> = ({ podcasts, isLoading }) => {
-  const { visibleItems: visiblePodcasts, listRef } = useLazyLoad<Podcast>(
-    podcasts,
-    16,
-    20
-  );
+  const { error } = usePodcastContext();
+
+  if (error) return <ErrorMessage message={error} />;
 
   return (
-    <div ref={listRef} className={styles.podcastListWrapper}>
+    <div className={styles.podcastListWrapper}>
       <ul className={styles.podcastList}>
         {isLoading
           ? Array.from({ length: 12 }).map((_, index) => (
               <PodcastListSkeleton key={`skeleton-${index}`} />
             ))
-          : visiblePodcasts.map((podcast) => (
+          : podcasts.map((podcast) => (
               <PodcastItem key={podcast.id} podcast={podcast} />
             ))}
       </ul>
@@ -80,4 +79,40 @@ const PodcastList: React.FC<PodcastListProps> = ({ podcasts, isLoading }) => {
   );
 };
 
-export default PodcastList;
+export default React.memo(PodcastList);
+
+// import React from 'react';
+// import { Podcast } from '@/types/PodcastTypes';
+// import PodcastItem from '../PodcastItem/PodcastItem';
+// import PodcastListSkeleton from '../Skeleton/PodcastItemSkeleton/PodcastItemSkeleton';
+// import styles from './PodcastList.module.css';
+// import useLazyLoad from '../../hooks/LazyLoad/useLazyLoad';
+
+// interface PodcastListProps {
+//   podcasts: Podcast[];
+//   isLoading: boolean;
+// }
+
+// const PodcastList: React.FC<PodcastListProps> = ({ podcasts, isLoading }) => {
+//   const { visibleItems: visiblePodcasts, listRef } = useLazyLoad<Podcast>(
+//     podcasts,
+//     16,
+//     20
+//   );
+
+//   return (
+// <div className={styles.podcastListWrapper}>
+//   <ul className={styles.podcastList}>
+//     {isLoading
+//       ? Array.from({ length: 12 }).map((_, index) => (
+//           <PodcastListSkeleton key={`skeleton-${index}`} />
+//         ))
+//       : visiblePodcasts.map((podcast) => (
+//           <PodcastItem key={podcast.id} podcast={podcast} />
+//         ))}
+//   </ul>
+// </div>
+//   );
+// };
+
+// export default PodcastList;

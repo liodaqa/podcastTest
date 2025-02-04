@@ -16,7 +16,7 @@ const App: React.FC = () => {
       <Router>
         <Header />
         <main className='mainContainer'>
-          <h1>DAQA</h1>
+          <h1>Hamza</h1>
           <Suspense fallback={<Spinner />}>
             <Routes>
               <Route path='/' element={<MainView />} />

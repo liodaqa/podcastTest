@@ -1,6 +1,6 @@
-// import { apiClient } from '../client/apiClient';
-// import { getCachedData, setCachedData } from '../utils/cacheUtil';
-// import { Podcast, DetailedPodcast, Episode } from '../../types/PodcastTypes';
+// import { apiClient } from '@/api/client/apiClient';
+// import { getCachedData, setCachedData } from '@/api/utils/cacheUtil';
+// import { Podcast, DetailedPodcast, Episode } from '@/types/PodcastTypes';
 
 // const CACHE_DURATION = 86400000; // 24 hours
 // const PODCASTS_ENDPOINT = '/us/rss/toppodcasts/limit=100/genre=1310/json';
@@ -99,35 +99,30 @@
 //     throw error;
 //   }
 // };
-import { apiClient } from '../client/apiClient';
-import { getCachedData, setCachedData } from '../utils/cacheUtil';
-import { Podcast, DetailedPodcast, Episode } from '../../types/PodcastTypes';
+import { apiClient } from '@/api/client/apiClient';
+import { getCachedData, setCachedData } from '@/api/utils/cacheUtil';
+import { Podcast, DetailedPodcast, Episode } from '@/types/PodcastTypes';
 
 const CACHE_DURATION = 86400000; // 24 hours
 const PODCASTS_ENDPOINT = '/us/rss/toppodcasts/limit=100/genre=1310/json';
+const BATCH_SIZE = 10; // Fetch details in batches of 10
 
 /**
- * Fetch all podcasts.
- * This function fetches and returns the transformed list of podcasts.
+ * Fetch all podcasts efficiently with caching.
  */
 export const fetchPodcasts = async (): Promise<Podcast[]> => {
   const cacheKey = 'podcasts';
   const cachedData = getCachedData<Podcast[]>(cacheKey, CACHE_DURATION);
+  if (cachedData) return cachedData;
 
-  if (cachedData) {
-    console.log('[PodcastService] ✅ Using cached podcasts data');
-    return cachedData; // ✅ Use cached data if available
-  }
+  console.time('[PodcastService] Fetch Podcasts Time');
 
   try {
-    console.log('[PodcastService] ⏳ Fetching podcasts from API...');
     const rawData = await apiClient<{ feed: { entry: any[] } }>(
       PODCASTS_ENDPOINT
     );
 
-    if (!rawData?.feed?.entry) {
-      throw new Error('❌ Invalid podcast data format');
-    }
+    if (!rawData?.feed?.entry) throw new Error('Invalid podcast data format');
 
     const podcasts: Podcast[] = rawData.feed.entry.map((item) => ({
       id: item.id.attributes['im:id'],
@@ -138,246 +133,445 @@ export const fetchPodcasts = async (): Promise<Podcast[]> => {
     }));
 
     setCachedData(cacheKey, podcasts);
-    console.log('[PodcastService] ✅ Fetched & Cached podcasts');
+    console.timeEnd('[PodcastService] Fetch Podcasts Time');
+
     return podcasts;
   } catch (error) {
-    console.error('[PodcastService] ❌ Error fetching podcasts:', error);
+    console.error('[PodcastService] Error fetching podcasts:', error);
+    console.timeEnd('[PodcastService] Fetch Podcasts Time');
     throw error;
   }
 };
 
 /**
- * Fetch details of a specific podcast, including its episodes.
+ * Fetch multiple podcast details in batches, optimizing API requests.
  */
-export const fetchPodcastDetails = async (
-  podcastId: string
-): Promise<DetailedPodcast> => {
-  const cacheKey = `podcast-${podcastId}`;
-  const cachedData = getCachedData<DetailedPodcast>(cacheKey, CACHE_DURATION);
+export const fetchPodcastDetailsBatch = async (
+  podcastIds: string[]
+): Promise<DetailedPodcast[]> => {
+  if (!podcastIds.length) return [];
+  console.time('[PodcastService] Fetch Podcasts Details Time');
 
-  if (cachedData) {
-    console.log(
-      `[PodcastService] ✅ Using cached details for podcast ${podcastId}`
-    );
-    return cachedData;
+  // ✅ Filter out IDs that are already cached
+  const uncachedIds = podcastIds.filter(
+    (id) => !getCachedData<DetailedPodcast>(`podcast-${id}`, CACHE_DURATION)
+  );
+
+  if (!uncachedIds.length) {
+    console.timeEnd('[PodcastService] Fetch Podcasts Details Time');
+    return [];
   }
 
-  try {
-    console.log(
-      `[PodcastService] ⏳ Fetching details for podcast ${podcastId} from API...`
+  const fetchBatch = async (batch: string[]) => {
+    return Promise.all(
+      batch.map(async (podcastId) => {
+        const cacheKey = `podcast-${podcastId}`;
+        const cachedData = getCachedData<DetailedPodcast>(
+          cacheKey,
+          CACHE_DURATION
+        );
+        if (cachedData) return cachedData;
+
+        try {
+          const rawData = await apiClient<{ results: any[] }>(
+            `/lookup?id=${podcastId}&entity=podcastEpisode`
+          );
+
+          if (!rawData?.results?.length)
+            throw new Error(`Invalid details for podcast ${podcastId}`);
+
+          const podcastData = rawData.results[0];
+
+          const episodes: Episode[] = rawData.results.slice(1).map((ep) => ({
+            trackId: ep.trackId ?? 0,
+            trackName: ep.trackName ?? 'Unknown Title',
+            releaseDate: ep.releaseDate ?? 'Unknown Date',
+            trackTimeMillis: ep.trackTimeMillis ?? 0,
+            episodeUrl: ep.episodeUrl || '',
+            description: ep.description || 'No description available.',
+          }));
+
+          const podcastDetails: DetailedPodcast = {
+            id: podcastId,
+            artworkUrl600: podcastData.artworkUrl600 || '',
+            collectionName: podcastData.collectionName || 'Unknown Collection',
+            artistName: podcastData.artistName || 'Unknown Artist',
+            summary: podcastData.description || 'No summary available',
+            description: podcastData.description || 'No description available',
+            episodes,
+          };
+
+          setCachedData(cacheKey, podcastDetails);
+          return podcastDetails;
+        } catch (error) {
+          console.error(
+            `[PodcastService] Error fetching details for podcast ${podcastId}:`,
+            error
+          );
+          return null;
+        }
+      })
     );
-    const [allPodcasts, rawData] = await Promise.all([
-      apiClient<{ feed: { entry: any[] } }>(PODCASTS_ENDPOINT),
-      apiClient<{ results: any[] }>(
-        `/lookup?id=${podcastId}&entity=podcastEpisode`
-      ),
-    ]);
+  };
 
-    if (!rawData?.results?.length || !allPodcasts?.feed?.entry) {
-      throw new Error('❌ Invalid podcast details or data format');
-    }
-
-    const podcastSummary = allPodcasts.feed.entry.find(
-      (entry) => entry.id.attributes['im:id'] === podcastId
-    )?.summary?.label;
-
-    const podcastData = rawData.results[0];
-
-    const episodes: Episode[] = rawData.results.slice(1).map((ep) => ({
-      trackId: ep.trackId ?? 0,
-      trackName: ep.trackName ?? 'Unknown Title',
-      releaseDate: ep.releaseDate ?? 'Unknown Date',
-      trackTimeMillis: ep.trackTimeMillis ?? 0,
-      episodeUrl: ep.episodeUrl || '',
-      description: ep.description || 'No description available.',
-    }));
-
-    const podcastDetails: DetailedPodcast = {
-      id: podcastId,
-      artworkUrl600: podcastData.artworkUrl600 || '',
-      collectionName: podcastData.collectionName || 'Unknown Collection',
-      artistName: podcastData.artistName || 'Unknown Artist',
-      summary: podcastSummary || 'No summary available',
-      description: podcastData.description || 'No description available',
-      episodes,
-    };
-
-    setCachedData(cacheKey, podcastDetails);
-    console.log(
-      `[PodcastService] ✅ Fetched & Cached details for podcast ${podcastId}`
-    );
-    return podcastDetails;
-  } catch (error) {
-    console.error('[PodcastService] ❌ Error fetching podcast details:', error);
-    throw error;
+  const allDetails: DetailedPodcast[] = [];
+  for (let i = 0; i < uncachedIds.length; i += BATCH_SIZE) {
+    const batch = uncachedIds.slice(i, i + BATCH_SIZE);
+    const results = await fetchBatch(batch);
+    allDetails.push(...results.filter((detail) => detail !== null));
   }
+
+  console.timeEnd('[PodcastService] Fetch Podcasts Details Time');
+  return allDetails;
 };
 
-// import { apiClient } from '../client/apiClient';
-// import { getCachedData, setCachedData } from '../utils/cacheUtil';
-// import { Podcast, DetailedPodcast, Episode } from '../../types/PodcastTypes';
+// import { apiClient } from '@/api/client/apiClient';
+// import { getCachedData, setCachedData } from '@/api/utils/cacheUtil';
+// import { Podcast, DetailedPodcast, Episode } from '@/types/PodcastTypes';
 
 // const CACHE_DURATION = 86400000; // 24 hours
 // const PODCASTS_ENDPOINT = '/us/rss/toppodcasts/limit=100/genre=1310/json';
-
-// // Promise cache to handle concurrent fetches
-// let fetchPodcastDetailsPromises: { [key: string]: Promise<DetailedPodcast> } =
-//   {};
-// let fetchPodcastsPromise: Promise<Podcast[]> | null = null;
+// const BATCH_SIZE = 10; // Fetch details in batches of 10
 
 // /**
-//  * Fetch all podcasts.
-//  * This function fetches and returns the transformed list of podcasts.
+//  * Fetch all podcasts efficiently with caching.
 //  */
 // export const fetchPodcasts = async (): Promise<Podcast[]> => {
 //   const cacheKey = 'podcasts';
-
-//   // Check cache
 //   const cachedData = getCachedData<Podcast[]>(cacheKey, CACHE_DURATION);
-//   if (cachedData) {
-//     console.log('[PodcastService] Using cached data for podcasts.');
-//     return cachedData;
-//   }
+//   if (cachedData) return cachedData;
 
-//   // Handle concurrent fetches
-//   if (fetchPodcastsPromise) {
-//     console.log(
-//       '[PodcastService] Fetch already in progress. Returning existing Promise.'
-//     );
-//     return fetchPodcastsPromise;
-//   }
-
-//   // Start timer only when initiating a new fetch
-//   console.time('[PodcastService] FetchPodcasts');
+//   if (console.timeStamp)
+//     console.timeStamp('[PodcastService] Fetch Podcasts Started');
+//   console.time('[PodcastService] Fetch Podcasts Time');
 
 //   try {
-//     console.log('[PodcastService] Fetching podcasts from API...');
-//     fetchPodcastsPromise = apiClient<{ feed: { entry: any[] } }>(
+//     const rawData = await apiClient<{ feed: { entry: any[] } }>(
 //       PODCASTS_ENDPOINT
-//     )
-//       .then((rawData) => {
-//         if (!rawData?.feed?.entry) {
-//           throw new Error('Invalid podcast data format.');
-//         }
+//     );
 
-//         console.time('[PodcastService] TransformPodcasts');
-//         const podcasts: Podcast[] = rawData.feed.entry.map((item) => ({
-//           id: item.id.attributes['im:id'],
-//           name: item['im:name'].label,
-//           artist: item['im:artist'].label,
-//           artwork: item['im:image']?.[2]?.label || '',
-//           summary: item.summary?.label || 'No summary available',
-//         }));
-//         console.timeEnd('[PodcastService] TransformPodcasts');
+//     if (!rawData?.feed?.entry) throw new Error('Invalid podcast data format');
 
-//         console.log('[PodcastService] Caching podcasts data...');
-//         setCachedData(cacheKey, podcasts);
+//     const podcasts: Podcast[] = rawData.feed.entry.map((item) => ({
+//       id: item.id.attributes['im:id'],
+//       name: item['im:name'].label,
+//       artist: item['im:artist'].label,
+//       artwork: item['im:image']?.[2]?.label || '',
+//       summary: item.summary?.label || 'No summary available',
+//     }));
 
-//         return podcasts;
-//       })
-//       .finally(() => {
-//         fetchPodcastsPromise = null; // Clear the Promise cache
-//         console.timeEnd('[PodcastService] FetchPodcasts'); // End timer when fetch completes
-//       });
+//     setCachedData(cacheKey, podcasts);
+//     console.timeEnd('[PodcastService] Fetch Podcasts Time');
 
-//     return fetchPodcastsPromise;
+//     return podcasts;
 //   } catch (error) {
 //     console.error('[PodcastService] Error fetching podcasts:', error);
-//     fetchPodcastsPromise = null; // Reset on error
-//     console.timeEnd('[PodcastService] FetchPodcasts'); // End timer on error
+//     console.timeEnd('[PodcastService] Fetch Podcasts Time');
 //     throw error;
 //   }
 // };
 
 // /**
-//  * Fetch details of a specific podcast, including its episodes.
+//  * Fetch multiple podcast details in batches to optimize performance.
 //  */
-// export const fetchPodcastDetails = async (
-//   podcastId: string
-// ): Promise<DetailedPodcast> => {
-//   const cacheKey = `podcast-${podcastId}`;
+// export const fetchPodcastDetailsBatch = async (
+//   podcastIds: string[]
+// ): Promise<DetailedPodcast[]> => {
+//   if (!podcastIds.length) return [];
+//   console.time('[PodcastService] Fetch Podcasts Details Time');
 
-//   console.time(`[PodcastService] FetchPodcastDetails ${podcastId}`);
+//   const fetchBatch = async (batch: string[]) => {
+//     return Promise.all(
+//       batch.map(async (podcastId) => {
+//         const cacheKey = `podcast-${podcastId}`;
+//         const cachedData = getCachedData<DetailedPodcast>(
+//           cacheKey,
+//           CACHE_DURATION
+//         );
 
-//   // Check cache
-//   const cachedData = getCachedData<DetailedPodcast>(cacheKey, CACHE_DURATION);
-//   if (cachedData) {
-//     console.log(
-//       `[PodcastService] Using cached details for podcast: ${podcastId}`
+//         // ✅ Return cached data instead of fetching again
+//         if (cachedData) return cachedData;
+
+//         try {
+//           const rawData = await apiClient<{ results: any[] }>(
+//             `/lookup?id=${podcastId}&entity=podcastEpisode`
+//           );
+
+//           if (!rawData?.results?.length)
+//             throw new Error(`Invalid details for podcast ${podcastId}`);
+
+//           const podcastData = rawData.results[0];
+
+//           const episodes: Episode[] = rawData.results.slice(1).map((ep) => ({
+//             trackId: ep.trackId ?? 0,
+//             trackName: ep.trackName ?? 'Unknown Title',
+//             releaseDate: ep.releaseDate ?? 'Unknown Date',
+//             trackTimeMillis: ep.trackTimeMillis ?? 0,
+//             episodeUrl: ep.episodeUrl || '',
+//             description: ep.description || 'No description available.',
+//           }));
+
+//           const podcastDetails: DetailedPodcast = {
+//             id: podcastId,
+//             artworkUrl600: podcastData.artworkUrl600 || '',
+//             collectionName: podcastData.collectionName || 'Unknown Collection',
+//             artistName: podcastData.artistName || 'Unknown Artist',
+//             summary: podcastData.description || 'No summary available',
+//             description: podcastData.description || 'No description available',
+//             episodes,
+//           };
+
+//           setCachedData(cacheKey, podcastDetails);
+//           return podcastDetails;
+//         } catch (error) {
+//           console.error(
+//             `[PodcastService] Error fetching details for podcast ${podcastId}:`,
+//             error
+//           );
+//           return null;
+//         }
+//       })
 //     );
-//     console.timeEnd(`[PodcastService] FetchPodcastDetails ${podcastId}`);
-//     return cachedData;
+//   };
+
+//   const allDetails: DetailedPodcast[] = [];
+//   for (let i = 0; i < podcastIds.length; i += BATCH_SIZE) {
+//     const batch = podcastIds.slice(i, i + BATCH_SIZE);
+//     const results = await fetchBatch(batch);
+//     allDetails.push(...results.filter((detail) => detail !== null));
 //   }
 
-//   // Handle concurrent fetches for specific podcast IDs
-//   if (await fetchPodcastDetailsPromises[podcastId]) {
-//     console.log(
-//       `[PodcastService] Fetch for podcast ${podcastId} already in progress.`
-//     );
-//     return fetchPodcastDetailsPromises[podcastId];
-//   }
+//   console.timeEnd('[PodcastService] Fetch Podcasts Details Time');
+//   return allDetails;
+// };
+
+// import { apiClient } from '@/api/client/apiClient';
+// import { getCachedData, setCachedData } from '@/api/utils/cacheUtil';
+// import { Podcast, DetailedPodcast, Episode } from '@/types/PodcastTypes';
+
+// const CACHE_DURATION = 86400000; // 24 hours
+// const PODCASTS_ENDPOINT = '/us/rss/toppodcasts/limit=100/genre=1310/json';
+// const BATCH_SIZE = 10; // Fetch details in batches of 10
+
+// /**
+//  * Fetch all podcasts efficiently with caching.
+//  */
+// export const fetchPodcasts = async (): Promise<Podcast[]> => {
+//   const cacheKey = 'podcasts';
+//   const cachedData = getCachedData<Podcast[]>(cacheKey, CACHE_DURATION);
+//   if (cachedData) return cachedData;
+
+//   console.time('[PodcastService] Fetch Podcasts Time');
 
 //   try {
-//     console.log(`[PodcastService] Fetching details for podcast: ${podcastId}`);
-//     fetchPodcastDetailsPromises[podcastId] = Promise.all([
-//       apiClient<{ feed: { entry: any[] } }>(PODCASTS_ENDPOINT),
-//       apiClient<{ results: any[] }>(
-//         `/lookup?id=${podcastId}&entity=podcastEpisode`
-//       ),
-//     ])
-//       .then(([allPodcasts, rawData]) => {
-//         if (!rawData?.results?.length || !allPodcasts?.feed?.entry) {
-//           throw new Error('Invalid podcast details or data format');
-//         }
-
-//         // Extract podcast summary from all podcasts
-//         const podcastSummary = allPodcasts.feed.entry.find(
-//           (entry) => entry.id.attributes['im:id'] === podcastId
-//         )?.summary?.label;
-
-//         const podcastData = rawData.results[0];
-
-//         console.time(`[PodcastService] TransformEpisodes ${podcastId}`);
-//         const episodes: Episode[] = rawData.results.slice(1).map((ep) => ({
-//           trackId: ep.trackId ?? 0,
-//           trackName: ep.trackName ?? 'Unknown Title',
-//           releaseDate: ep.releaseDate ?? 'Unknown Date',
-//           trackTimeMillis: ep.trackTimeMillis ?? 0,
-//           episodeUrl: ep.episodeUrl || '',
-//           description: ep.description || 'No description available.',
-//         }));
-//         console.timeEnd(`[PodcastService] TransformEpisodes ${podcastId}`);
-
-//         const podcastDetails: DetailedPodcast = {
-//           id: podcastId,
-//           artworkUrl600: podcastData.artworkUrl600 || '',
-//           collectionName: podcastData.collectionName || 'Unknown Collection',
-//           artistName: podcastData.artistName || 'Unknown Artist',
-//           summary: podcastSummary || 'No summary available',
-//           description: podcastData.description || 'No description available',
-//           episodes,
-//         };
-
-//         console.log(
-//           `[PodcastService] Caching details for podcast: ${podcastId}`
-//         );
-//         setCachedData(cacheKey, podcastDetails);
-
-//         return podcastDetails;
-//       })
-//       .finally(() => {
-//         delete fetchPodcastDetailsPromises[podcastId]; // Clear the Promise cache
-//         console.timeEnd(`[PodcastService] FetchPodcastDetails ${podcastId}`);
-//       });
-
-//     return fetchPodcastDetailsPromises[podcastId];
-//   } catch (error) {
-//     console.error(
-//       `[PodcastService] Error fetching details for podcast ${podcastId}:`,
-//       error
+//     const rawData = await apiClient<{ feed: { entry: any[] } }>(
+//       PODCASTS_ENDPOINT
 //     );
-//     delete fetchPodcastDetailsPromises[podcastId]; // Reset on error
-//     console.timeEnd(`[PodcastService] FetchPodcastDetails ${podcastId}`);
+
+//     if (!rawData?.feed?.entry) throw new Error('Invalid podcast data format');
+
+//     const podcasts: Podcast[] = rawData.feed.entry.map((item) => ({
+//       id: item.id.attributes['im:id'],
+//       name: item['im:name'].label,
+//       artist: item['im:artist'].label,
+//       artwork: item['im:image']?.[2]?.label || '',
+//       summary: item.summary?.label || 'No summary available',
+//     }));
+
+//     setCachedData(cacheKey, podcasts);
+//     console.timeEnd('[PodcastService] Fetch Podcasts Time'); // Ensure timer always ends
+
+//     return podcasts;
+//   } catch (error) {
+//     console.error('[PodcastService] Error fetching podcasts:', error);
+//     console.timeEnd('[PodcastService] Fetch Podcasts Time'); // Ensure timer always ends
 //     throw error;
 //   }
+// };
+
+// /**
+//  * Fetch multiple podcast details in batches to optimize performance.
+//  */
+// export const fetchPodcastDetailsBatch = async (
+//   podcastIds: string[]
+// ): Promise<DetailedPodcast[]> => {
+//   console.time('[PodcastService] Fetch Podcasts Details Time');
+
+//   const fetchBatch = async (batch: string[]) => {
+//     return Promise.all(
+//       batch.map(async (podcastId) => {
+//         const cacheKey = `podcast-${podcastId}`;
+//         const cachedData = getCachedData<DetailedPodcast>(
+//           cacheKey,
+//           CACHE_DURATION
+//         );
+//         if (cachedData) return cachedData;
+
+//         try {
+//           const rawData = await apiClient<{ results: any[] }>(
+//             `/lookup?id=${podcastId}&entity=podcastEpisode`
+//           );
+
+//           if (!rawData?.results?.length)
+//             throw new Error(`Invalid details for podcast ${podcastId}`);
+
+//           const podcastData = rawData.results[0];
+
+//           const episodes: Episode[] = rawData.results.slice(1).map((ep) => ({
+//             trackId: ep.trackId ?? 0,
+//             trackName: ep.trackName ?? 'Unknown Title',
+//             releaseDate: ep.releaseDate ?? 'Unknown Date',
+//             trackTimeMillis: ep.trackTimeMillis ?? 0,
+//             episodeUrl: ep.episodeUrl || '',
+//             description: ep.description || 'No description available.',
+//           }));
+
+//           const podcastDetails: DetailedPodcast = {
+//             id: podcastId,
+//             artworkUrl600: podcastData.artworkUrl600 || '',
+//             collectionName: podcastData.collectionName || 'Unknown Collection',
+//             artistName: podcastData.artistName || 'Unknown Artist',
+//             summary: podcastData.description || 'No summary available',
+//             description: podcastData.description || 'No description available',
+//             episodes,
+//           };
+
+//           setCachedData(cacheKey, podcastDetails);
+//           return podcastDetails;
+//         } catch (error) {
+//           console.error(
+//             `[PodcastService] Error fetching details for podcast ${podcastId}:`,
+//             error
+//           );
+//           return null;
+//         }
+//       })
+//     );
+//   };
+
+//   const allDetails: DetailedPodcast[] = [];
+//   for (let i = 0; i < podcastIds.length; i += BATCH_SIZE) {
+//     const batch = podcastIds.slice(i, i + BATCH_SIZE);
+//     const results = await fetchBatch(batch);
+//     allDetails.push(...results.filter((detail) => detail !== null));
+//   }
+
+//   console.timeEnd('[PodcastService] Fetch Podcasts Details Time'); // Ensure timer always ends
+//   return allDetails;
+// };
+
+// import { apiClient } from '@/api/client/apiClient';
+// import { getCachedData, setCachedData } from '@/api/utils/cacheUtil';
+// import { Podcast, DetailedPodcast, Episode } from '@/types/PodcastTypes';
+
+// const CACHE_DURATION = 86400000; // 24 hours
+// const PODCASTS_ENDPOINT = '/us/rss/toppodcasts/limit=100/genre=1310/json';
+// const BATCH_SIZE = 10; // Fetch details in batches of 10 for efficiency
+
+// /**
+//  * Fetch all podcasts efficiently.
+//  * Uses caching & streaming for faster responses.
+//  */
+// export const fetchPodcasts = async (): Promise<Podcast[]> => {
+//   const cacheKey = 'podcasts';
+//   const cachedData = getCachedData<Podcast[]>(cacheKey, CACHE_DURATION);
+//   if (cachedData) return cachedData;
+
+//   console.time('[PodcastService] Fetch Podcasts Time');
+
+//   try {
+//     const rawData = await apiClient<{ feed: { entry: any[] } }>(
+//       PODCASTS_ENDPOINT
+//     );
+
+//     if (!rawData?.feed?.entry) throw new Error('Invalid podcast data format');
+
+//     const podcasts: Podcast[] = rawData.feed.entry.map((item) => ({
+//       id: item.id.attributes['im:id'],
+//       name: item['im:name'].label,
+//       artist: item['im:artist'].label,
+//       artwork: item['im:image']?.[2]?.label || '',
+//       summary: item.summary?.label || 'No summary available',
+//     }));
+
+//     setCachedData(cacheKey, podcasts);
+//     console.timeEnd('[PodcastService] Fetch Podcasts Time');
+
+//     return podcasts;
+//   } catch (error) {
+//     console.error('[PodcastService] Error fetching podcasts:', error);
+//     console.timeEnd('[PodcastService] Fetch Podcasts Time');
+//     throw error;
+//   }
+// };
+
+// /**
+//  * Fetch multiple podcast details in batches for speed.
+//  */
+// export const fetchPodcastDetailsBatch = async (
+//   podcastIds: string[]
+// ): Promise<DetailedPodcast[]> => {
+//   console.time('[PodcastService] Fetch Podcasts Details Time');
+
+//   const fetchBatch = async (batch: string[]) => {
+//     return Promise.all(
+//       batch.map(async (podcastId) => {
+//         const cacheKey = `podcast-${podcastId}`;
+//         const cachedData = getCachedData<DetailedPodcast>(
+//           cacheKey,
+//           CACHE_DURATION
+//         );
+//         if (cachedData) return cachedData;
+
+//         try {
+//           const rawData = await apiClient<{ results: any[] }>(
+//             `/lookup?id=${podcastId}&entity=podcastEpisode`
+//           );
+
+//           if (!rawData?.results?.length)
+//             throw new Error(`Invalid details for podcast ${podcastId}`);
+
+//           const podcastData = rawData.results[0];
+
+//           const episodes: Episode[] = rawData.results.slice(1).map((ep) => ({
+//             trackId: ep.trackId ?? 0,
+//             trackName: ep.trackName ?? 'Unknown Title',
+//             releaseDate: ep.releaseDate ?? 'Unknown Date',
+//             trackTimeMillis: ep.trackTimeMillis ?? 0,
+//             episodeUrl: ep.episodeUrl || '',
+//             description: ep.description || 'No description available.',
+//           }));
+
+//           const podcastDetails: DetailedPodcast = {
+//             id: podcastId,
+//             artworkUrl600: podcastData.artworkUrl600 || '',
+//             collectionName: podcastData.collectionName || 'Unknown Collection',
+//             artistName: podcastData.artistName || 'Unknown Artist',
+//             summary: podcastData.description || 'No summary available',
+//             description: podcastData.description || 'No description available',
+//             episodes,
+//           };
+
+//           setCachedData(cacheKey, podcastDetails);
+//           return podcastDetails;
+//         } catch (error) {
+//           console.error(
+//             `[PodcastService] Error fetching details for podcast ${podcastId}:`,
+//             error
+//           );
+//           return null;
+//         }
+//       })
+//     );
+//   };
+
+//   const allDetails: DetailedPodcast[] = [];
+//   for (let i = 0; i < podcastIds.length; i += BATCH_SIZE) {
+//     const batch = podcastIds.slice(i, i + BATCH_SIZE);
+//     const results = await fetchBatch(batch);
+//     allDetails.push(...results.filter((detail) => detail !== null));
+//   }
+
+//   console.timeEnd('[PodcastService] Fetch Podcasts Details Time');
+//   return allDetails;
 // };
