@@ -54,9 +54,11 @@ export default defineConfig(() => {
       },
     },
     build: {
+      minify: false, // Disable minification (for debugging)
+      sourcemap: true,
       outDir: 'dist',
-      sourcemap: false,
-      minify: 'esbuild',
+      // sourcemap: false,
+      // minify: 'esbuild',
     },
     resolve: {
       alias: {
