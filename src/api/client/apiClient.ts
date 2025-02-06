@@ -52,19 +52,16 @@
  * Supports proxying via allorigins.win.
  */
 const buildUrl = (baseUrl: string, endpoint: string): string => {
-  return baseUrl.includes('allorigins.win')
-    ? `${baseUrl}${encodeURIComponent(`https://itunes.apple.com${endpoint}`)}`
-    : `${baseUrl}${endpoint}`;
+  return `${baseUrl}${endpoint}`;
 };
-const SECRET_KEY = import.meta.env.VITE_SECRET_KEY || null;
-console.log(SECRET_KEY, 'SECRET_KEY');
+
 export const apiClient = async <T>(
   endpoint: string,
   options: RequestInit = {},
   baseUrl?: string
 ): Promise<T> => {
   if (!endpoint) {
-    throw new Error('Endpoint cannot be empty');
+    throw new Error('[API Client] ❌ Error: Endpoint cannot be empty');
   }
 
   const BASE_URL = baseUrl || import.meta.env.VITE_API_BASE_URL;
@@ -72,18 +69,20 @@ export const apiClient = async <T>(
 
   try {
     console.log(`[API Client] Fetching: ${url}`);
+    console.log(`🌎 Environment Mode: ${import.meta.env.MODE}`);
+    console.log(
+      `🔑 SECRET_KEY Exists: ${import.meta.env.VITE_SECRET_KEY ? '✔️ Yes' : '❌ No'}`
+    );
+
     const response = await fetch(url, options);
 
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      throw new Error(`[API Client] ❌ HTTP error! Status: ${response.status}`);
     }
 
-    const rawData = await response.json();
-    return BASE_URL.includes('allorigins.win') && rawData.contents
-      ? JSON.parse(rawData.contents)
-      : rawData;
+    return await response.json();
   } catch (error) {
-    console.error('[API Client] Error:', error);
+    console.error('[API Client] ❌ Error:', error);
     throw error;
   }
 };
