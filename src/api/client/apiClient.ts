@@ -67,13 +67,22 @@ export const apiClient = async <T>(
   const BASE_URL = baseUrl || import.meta.env.VITE_API_BASE_URL;
   const url = buildUrl(BASE_URL, endpoint);
 
-  try {
-    console.log(`[API Client] Fetching: ${url}`);
-    console.log(`🌎 Environment Mode: ${import.meta.env.MODE}`);
-    console.log(
-      `🔑 SECRET_KEY Exists: ${import.meta.env.VITE_SECRET_KEY ? '✔️ Yes' : '❌ No'}`
-    );
+  // ✅ Debugging logs to verify environment and API URL
+  console.log(`[API Client] Fetching: ${url}`);
+  console.log(`🌎 Environment Mode: ${import.meta.env.MODE}`);
+  console.log(
+    `🔑 SECRET_KEY Exists: ${import.meta.env.VITE_SECRET_KEY ? '✔️ Yes' : '❌ No'}`
+  );
+  console.log(`🔍 Using API Base URL: ${BASE_URL}`);
 
+  if (!BASE_URL) {
+    console.error(
+      '❌ ERROR: VITE_API_BASE_URL is missing! Check your environment variables.'
+    );
+    throw new Error('VITE_API_BASE_URL is not defined');
+  }
+
+  try {
     const response = await fetch(url, options);
 
     if (!response.ok) {
