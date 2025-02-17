@@ -575,13 +575,13 @@
 // //   }
 // // };
 import { Podcast, DetailedPodcast, Episode } from '@/types/PodcastTypes';
+import { apiClient } from '@/api/client/apiClient';
 import { getCache } from '../utils/cacheUtil';
-import { getWithAllOrigins } from '@/api/client/proxyHelper';
 
 export const fetchPodcasts = async (): Promise<Podcast[]> => {
-  const targetUrl =
-    'https://itunes.apple.com/us/rss/toppodcasts/limit=100/genre=1310/json';
-  const data = await getWithAllOrigins(targetUrl);
+  const data = await apiClient<any>(
+    '/us/rss/toppodcasts/limit=100/genre=1310/json'
+  );
   const items = data.feed?.entry || [];
   return items.map((item: any) => ({
     id: item.id.attributes['im:id'],
@@ -595,13 +595,13 @@ export const fetchPodcasts = async (): Promise<Podcast[]> => {
 export const fetchPodcastDetail = async (
   podcastId: string
 ): Promise<{ podcast: DetailedPodcast; episodes: Episode[] }> => {
-  const targetUrl = `https://itunes.apple.com/lookup?id=${podcastId}&media=podcast&entity=podcastEpisode&limit=20`;
-  const data = await getWithAllOrigins(targetUrl);
+  const data = await apiClient<any>(
+    `/lookup?id=${podcastId}&media=podcast&entity=podcastEpisode&limit=20`
+  );
   const results = data.results;
   if (!results || results.length === 0) throw new Error('Podcast not found');
 
   const podcastData = results[0];
-
   let summary = podcastData.summary || '';
   if (!summary) {
     const podcastsCache = getCache('podcastsList');
