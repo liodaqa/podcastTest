@@ -147,9 +147,33 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  timeout: 15000, // 15 seconds timeout
-  // No baseURL is set, as requests will use relative URLs and be proxied by Vite.
+  timeout: 15000, // 15-second timeout
+  // No baseURL here, because service functions build full URLs dynamically.
 });
+
+/**
+ * Attempts to fetch the given target URL through AllOrigins.
+ * If AllOrigins fails, falls back to ThingProxy.
+ * @param targetUrl The URL you wish to fetch.
+ * @returns Parsed JSON data from the proxied response.
+ */
+export const getWithProxy = async (targetUrl: string): Promise<any> => {
+  const allOriginsBase =
+    'https://api.allorigins.win/get?disableCache=true&url=';
+  const allOriginsUrl = `${allOriginsBase}${encodeURIComponent(targetUrl)}`;
+
+  try {
+    const response = await apiClient.get(allOriginsUrl);
+    return JSON.parse(response.data.contents);
+  } catch (error) {
+    console.warn('AllOrigins failed, using fallback proxy:', error);
+    // Fallback to ThingProxy if AllOrigins fails
+    const thingProxyBase = 'https://thingproxy.freeboard.io/fetch/?url=';
+    const fallbackUrl = `${thingProxyBase}${encodeURIComponent(targetUrl)}`;
+    const fallbackResponse = await apiClient.get(fallbackUrl);
+    return JSON.parse(fallbackResponse.data);
+  }
+};
 
 export default apiClient;
 
