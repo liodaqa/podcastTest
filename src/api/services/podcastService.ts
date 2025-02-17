@@ -576,38 +576,12 @@
 // // };
 import { Podcast, DetailedPodcast, Episode } from '@/types/PodcastTypes';
 import { getCache } from '../utils/cacheUtil';
-import apiClient from '@/api/client/apiClient';
-
-const isProd = import.meta.env.PROD;
-const useCustomProxy = import.meta.env.VITE_USE_PROXY_FOR_PROD === 'true';
-
-// Helper: build URL depending on environment and variable.
-const buildUrl = (path: string, targetBase: string) => {
-  const fullTarget = targetBase + path;
-  if (isProd && useCustomProxy) {
-    // Use our custom proxy endpoint in production.
-    return `/api/proxy?url=${encodeURIComponent(fullTarget)}`;
-  } else {
-    // Otherwise, use relative URL so that Vite's proxy works.
-    return path;
-  }
-};
-
-const parseResponse = (response: any) => {
-  if (isProd && useCustomProxy) {
-    // Our proxy returns raw text, parse it.
-    return JSON.parse(response.data);
-  } else {
-    return response.data;
-  }
-};
+import { getWithAllOrigins } from '@/api/client/proxyHelper';
 
 export const fetchPodcasts = async (): Promise<Podcast[]> => {
-  const targetPath = '/us/rss/toppodcasts/limit=100/genre=1310/json';
-  const targetBase = 'https://itunes.apple.com';
-  const url = buildUrl(targetPath, targetBase);
-  const response = await apiClient.get(url);
-  const data = parseResponse(response);
+  const targetUrl =
+    'https://itunes.apple.com/us/rss/toppodcasts/limit=100/genre=1310/json';
+  const data = await getWithAllOrigins(targetUrl);
   const items = data.feed?.entry || [];
   return items.map((item: any) => ({
     id: item.id.attributes['im:id'],
@@ -621,15 +595,13 @@ export const fetchPodcasts = async (): Promise<Podcast[]> => {
 export const fetchPodcastDetail = async (
   podcastId: string
 ): Promise<{ podcast: DetailedPodcast; episodes: Episode[] }> => {
-  const targetPath = `/lookup?id=${podcastId}&media=podcast&entity=podcastEpisode&limit=20`;
-  const targetBase = 'https://itunes.apple.com';
-  const url = buildUrl(targetPath, targetBase);
-  const response = await apiClient.get(url);
-  const data = parseResponse(response);
+  const targetUrl = `https://itunes.apple.com/lookup?id=${podcastId}&media=podcast&entity=podcastEpisode&limit=20`;
+  const data = await getWithAllOrigins(targetUrl);
   const results = data.results;
   if (!results || results.length === 0) throw new Error('Podcast not found');
 
   const podcastData = results[0];
+
   let summary = podcastData.summary || '';
   if (!summary) {
     const podcastsCache = getCache('podcastsList');
