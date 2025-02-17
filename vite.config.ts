@@ -2,10 +2,9 @@
 // import react from '@vitejs/plugin-react';
 // import tsconfigPaths from 'vite-tsconfig-paths';
 // import path from 'path';
-// import viteCompression from 'vite-plugin-compression';
 
 // export default defineConfig(({ mode }) => ({
-//   plugins: [react(), tsconfigPaths(), viteCompression()],
+//   plugins: [react(), tsconfigPaths()],
 //   server: {
 //     port: 3000,
 //     proxy: {
@@ -16,14 +15,9 @@
 //       },
 //     },
 //   },
-
 //   build: {
 //     outDir: 'dist',
 //     sourcemap: false,
-//     minify: 'terser', // Minify JavaScript
-//     terserOptions: {
-//       compress: true,
-//     },
 //   },
 //   define: {
 //     'process.env.NODE_ENV': JSON.stringify(mode),
@@ -39,31 +33,48 @@ import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'path';
 
-export default defineConfig(() => {
-  return {
-    plugins: [react(), tsconfigPaths()],
-    server: {
-      port: 3000,
-      proxy: {
-        '/api': {
-          target: 'https://itunes.apple.com',
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path.replace(/^\/api/, ''),
-        },
+export default defineConfig(({ mode }) => ({
+  plugins: [react(), tsconfigPaths()],
+  server: {
+    port: 3000,
+    strictPort: true,
+    proxy: {
+      '/lookup': {
+        target: 'https://itunes.apple.com',
+        changeOrigin: true,
+        rewrite: (path) => path, // No need to modify if paths match
+      },
+      '/us/rss': {
+        target: 'https://itunes.apple.com',
+        changeOrigin: true,
       },
     },
-    build: {
-      minify: false, // Disable minification (for debugging)
-      sourcemap: true,
-      outDir: 'dist',
-      // sourcemap: false,
-      // minify: 'esbuild',
+    // proxy: {
+    //   '/api': {
+    //     target: 'https://itunes.apple.com',
+    //     changeOrigin: true,
+    //     rewrite: (path) => path.replace(/^\/api/, ''),
+    //     // '/api': {
+    //     //   target: 'https://api.codetabs.com/v1/proxy/?quest=', // ✅ Alternative CORS Proxy
+    //     //   changeOrigin: true,
+    //     //   rewrite: (path) => path.replace(/^\/api/, ''),
+    //   },
+    // },
+    // preview: {
+    //   port: 5000,
+    //   strictPort: true,
+    // },
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+  },
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(mode),
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
     },
-    resolve: {
-      alias: {
-        '@': path.resolve(__dirname, 'src'),
-      },
-    },
-  };
-});
+  },
+}));

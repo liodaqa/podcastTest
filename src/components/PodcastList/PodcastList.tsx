@@ -1,118 +1,56 @@
+// import React from 'react';
 // import { Podcast } from '@/types/PodcastTypes';
 // import PodcastItem from '../PodcastItem/PodcastItem';
-// import PodcastListSkeleton from '../Skeleton/PodcastItemSkeleton/PodcastItemSkeleton';
 // import styles from './PodcastList.module.css';
-// import useLazyLoad from '../../hooks/LazyLoad/useLazyLoad';
-// import { usePodcastContext } from '../../context/PodcastContext';
 
 // interface PodcastListProps {
 //   podcasts: Podcast[];
-//   isLoading: boolean;
 // }
 
-// const PodcastList: React.FC<PodcastListProps> = ({ podcasts, isLoading }) => {
-//   const { visibleItems: visiblePodcasts, listRef } = useLazyLoad<Podcast>(
-//     podcasts,
-//     16,
-//     20
-//   );
-//   console.log(isLoading, 'list');
+// const PodcastList: React.FC<PodcastListProps> = React.memo(({ podcasts }) => {
+//   if (!podcasts || podcasts.length === 0) {
+//     return null;
+//   }
+
 //   return (
-//     <div
-//       ref={listRef}
-//       className={styles.podcastListWrapper}
-//       onScroll={(e) => e.preventDefault()}
-//     >
+//     <div className={styles.podcastListWrapper}>
 //       <ul className={styles.podcastList}>
-//         {/* {isLoading
-//           ? Array.from({ length: 12 }).map((_, index) => (
-//               <PodcastListSkeleton key={`skeleton-${index}`} />
-//             ))
-//           : Array.isArray(visiblePodcasts)
-//             ? visiblePodcasts.map((podcast) => (
-//                 <PodcastItem key={podcast.id} podcast={podcast} />
-//               ))
-//             : null} */}
-//         {isLoading
-//           ? Array.from({ length: 12 }).map((_, index) => (
-//               <PodcastListSkeleton key={`skeleton-${index}`} />
-//             ))
-//           : visiblePodcasts.map((podcast) => (
-//               <PodcastItem key={podcast.id} podcast={podcast} />
-//             ))}
+//         {podcasts.map((podcast) => (
+//           <PodcastItem key={podcast.id} podcast={podcast} />
+//         ))}
 //       </ul>
 //     </div>
 //   );
-// };
+// });
 
 // export default PodcastList;
 import React from 'react';
 import { Podcast } from '@/types/PodcastTypes';
 import PodcastItem from '../PodcastItem/PodcastItem';
-import ErrorMessage from '../ErrorMessage/ErrorMessage';
-import { usePodcastContext } from '@/context/PodcastContext';
-import PodcastListSkeleton from '../Skeleton/PodcastItemSkeleton/PodcastItemSkeleton';
 import styles from './PodcastList.module.css';
+import PodcastItemSkeleton from '../Skeleton/PodcastItemSkeleton/PodcastItemSkeleton';
 
 interface PodcastListProps {
   podcasts: Podcast[];
-  isLoading: boolean;
+  loading: boolean;
 }
 
-const PodcastList: React.FC<PodcastListProps> = ({ podcasts, isLoading }) => {
-  const { error } = usePodcastContext();
+const PodcastList: React.FC<PodcastListProps> = React.memo(
+  ({ podcasts, loading }) => {
+    return (
+      <div className={styles.podcastListWrapper}>
+        <ul className={styles.podcastList}>
+          {loading
+            ? Array.from({ length: 6 }).map((_, index) => (
+                <PodcastItemSkeleton key={index} />
+              ))
+            : podcasts.map((podcast) => (
+                <PodcastItem key={podcast.id} podcast={podcast} />
+              ))}
+        </ul>
+      </div>
+    );
+  }
+);
 
-  if (error) return <ErrorMessage message={error} />;
-
-  return (
-    <div className={styles.podcastListWrapper}>
-      <ul className={styles.podcastList}>
-        {isLoading
-          ? Array.from({ length: 12 }).map((_, index) => (
-              <PodcastListSkeleton key={`skeleton-${index}`} />
-            ))
-          : podcasts.map((podcast) => (
-              <PodcastItem key={podcast.id} podcast={podcast} />
-            ))}
-      </ul>
-    </div>
-  );
-};
-
-export default React.memo(PodcastList);
-
-// import React from 'react';
-// import { Podcast } from '@/types/PodcastTypes';
-// import PodcastItem from '../PodcastItem/PodcastItem';
-// import PodcastListSkeleton from '../Skeleton/PodcastItemSkeleton/PodcastItemSkeleton';
-// import styles from './PodcastList.module.css';
-// import useLazyLoad from '../../hooks/LazyLoad/useLazyLoad';
-
-// interface PodcastListProps {
-//   podcasts: Podcast[];
-//   isLoading: boolean;
-// }
-
-// const PodcastList: React.FC<PodcastListProps> = ({ podcasts, isLoading }) => {
-//   const { visibleItems: visiblePodcasts, listRef } = useLazyLoad<Podcast>(
-//     podcasts,
-//     16,
-//     20
-//   );
-
-//   return (
-// <div className={styles.podcastListWrapper}>
-//   <ul className={styles.podcastList}>
-//     {isLoading
-//       ? Array.from({ length: 12 }).map((_, index) => (
-//           <PodcastListSkeleton key={`skeleton-${index}`} />
-//         ))
-//       : visiblePodcasts.map((podcast) => (
-//           <PodcastItem key={podcast.id} podcast={podcast} />
-//         ))}
-//   </ul>
-// </div>
-//   );
-// };
-
-// export default PodcastList;
+export default PodcastList;

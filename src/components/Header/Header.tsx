@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import Spinner from '../Spinner/Spinner';
 import styles from './Header.module.css';
-import { usePodcastContext } from '../../context/PodcastContext';
+import { PodcastContext } from '../../context/PodcastContext';
 
 const Header: React.FC = () => {
-  const { globalLoading } = usePodcastContext();
+  // const { globalLoading } = usePodcastContext();
+  const { podcastsLoading } = useContext(PodcastContext);
 
   return (
     <header className={styles.headerWrapper}>
@@ -13,7 +14,7 @@ const Header: React.FC = () => {
         <Link to='/' className={styles.title}>
           Podcaster
         </Link>
-        {globalLoading && <Spinner />}
+        {podcastsLoading && <Spinner />}
       </div>
     </header>
   );

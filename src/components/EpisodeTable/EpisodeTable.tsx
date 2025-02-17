@@ -10,6 +10,9 @@ interface EpisodeTableProps {
 }
 
 const EpisodeTable: React.FC<EpisodeTableProps> = ({ episodes, podcastId }) => {
+  if (episodes.length === 0) {
+    return null;
+  }
   return (
     <table className={styles.episodesTable}>
       <thead>
@@ -30,8 +33,9 @@ const EpisodeTable: React.FC<EpisodeTableProps> = ({ episodes, podcastId }) => {
                 {episode.trackName}
               </Link>
             </td>
-            <td>{new Date(episode.releaseDate).toLocaleDateString()}</td>
-            <td>{formatDuration(episode.trackTimeMillis)}</td>
+            <td>{episode.releaseDate}</td>
+            {/* <td>{new Date(episode.releaseDate).toLocaleDateString()}</td> */}
+            <td>{episode.trackTimeMillis}</td>
           </tr>
         ))}
       </tbody>

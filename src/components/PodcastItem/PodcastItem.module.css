@@ -21,6 +21,7 @@
   font-size: var(--font-size-medium);
   text-decoration: none;
   transition: color 0.3s ease;
+  text-transform: uppercase;
 }
 .podcastLink:hover {
   color: var(--color-hover);
