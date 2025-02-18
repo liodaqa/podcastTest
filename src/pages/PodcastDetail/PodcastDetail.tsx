@@ -10,11 +10,11 @@
 //   const { podcastDetails, fetchPodcastDetail } = usePodcastContext();
 
 //   // Fetch details but do not block UI
-//   useEffect(() => {
-//     if (podcastId && !podcastDetails[podcastId]) {
-//       fetchPodcastDetail(podcastId);
-//     }
-//   }, [podcastId, fetchPodcastDetail]);
+// useEffect(() => {
+//   if (podcastId && !podcastDetails[podcastId]) {
+//     fetchPodcastDetail(podcastId);
+//   }
+// }, [podcastId, fetchPodcastDetail]);
 
 //   if (!podcastId) {
 //     return <div>Error: Podcast ID is missing.</div>;
@@ -69,7 +69,8 @@ const PodcastDetail: React.FC = () => {
 
   // Show loading if no data is available for this podcast
   if (!podcastId || !podcastDetails[podcastId]) {
-    return <p>Loading podcast details...</p>;
+    return null;
+    // <p>Loading podcast details...</p>;
   }
 
   const detail = podcastDetails[podcastId];

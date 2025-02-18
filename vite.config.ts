@@ -43,10 +43,12 @@ export default defineConfig(({ mode }) => ({
         target: 'https://itunes.apple.com',
         changeOrigin: true,
         rewrite: (path) => path, // No need to modify if paths match
+        secure: false,
       },
       '/us/rss': {
         target: 'https://itunes.apple.com',
         changeOrigin: true,
+        secure: false,
       },
     },
     // proxy: {

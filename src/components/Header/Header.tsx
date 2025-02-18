@@ -5,7 +5,6 @@ import styles from './Header.module.css';
 import { PodcastContext } from '../../context/PodcastContext';
 
 const Header: React.FC = () => {
-  // const { globalLoading } = usePodcastContext();
   const { podcastsLoading } = useContext(PodcastContext);
 
   return (

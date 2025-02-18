@@ -110,13 +110,33 @@ export const buildUrl = (baseUrl: string, endpoint: string): string => {
   if (import.meta.env.DEV) {
     return endpoint;
   }
-  // In production, if it's a lookup endpoint, use corsproxy.io.
+
+  // If using the corsproxy, ensure we pass the query with 'limit=20'
   if (endpoint.startsWith('/lookup')) {
-    return `https://corsproxy.io/?${encodeURIComponent(`${baseUrl}${endpoint}`)}`;
+    const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(`${baseUrl}${endpoint}`)}`;
+    // Check if the query already has `limit=20`. If not, append it.
+    if (!endpoint.includes('limit=20')) {
+      return proxyUrl + '&limit=20'; // Append limit if not included
+    }
+    return proxyUrl;
   }
+
   // Otherwise, use the full URL.
   return `${baseUrl}${endpoint}`;
 };
+
+// export const buildUrl = (baseUrl: string, endpoint: string): string => {
+//   // In development, use relative URLs so that Vite's proxy is used.
+//   if (import.meta.env.DEV) {
+//     return endpoint;
+//   }
+//   // In production, if it's a lookup endpoint, use corsproxy.io.
+//   if (endpoint.startsWith('/lookup')) {
+//     return `https://corsproxy.io/?${encodeURIComponent(`${baseUrl}${endpoint}`)}`;
+//   }
+//   // Otherwise, use the full URL.
+//   return `${baseUrl}${endpoint}`;
+// };
 
 export const apiClient = async <T>(
   endpoint: string,
@@ -131,11 +151,8 @@ export const apiClient = async <T>(
     baseUrl || import.meta.env.VITE_API_BASE_URL || 'https://itunes.apple.com';
   const url = buildUrl(BASE_URL, endpoint);
 
-  console.log('[API Client] Full URL:', url);
-
   try {
     const response = await fetch(url, options);
-    console.log('[API Client] Response Status:', response.status);
 
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);

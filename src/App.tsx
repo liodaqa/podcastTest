@@ -1,9 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-// import { PodcastProvider } from './context/PodcastContext';
 import Header from './components/Header/Header';
 import Spinner from './components/Spinner/Spinner';
-import DebugInfo from './DebugInfo';
 import { PodcastProvider } from './context/PodcastContext';
 const MainView = lazy(() => import('./pages/MainView/MainView'));
 const PodcastDetail = lazy(() => import('./pages/PodcastDetail/PodcastDetail'));
@@ -14,11 +12,10 @@ const EpisodeDetail = lazy(
 const App: React.FC = () => {
   return (
     <PodcastProvider>
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Header />
+        <h1>HAMZA</h1>
         <main className='mainContainer'>
-          {/* <h1>Hamza</h1> */}
-          {/* <DebugInfo /> */}
           <Suspense fallback={<Spinner />}>
             <Routes>
               <Route path='/' element={<MainView />} />

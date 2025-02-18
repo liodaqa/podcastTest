@@ -598,6 +598,7 @@ export const fetchPodcastDetail = async (
   const data = await apiClient<any>(
     `/lookup?id=${podcastId}&media=podcast&entity=podcastEpisode&limit=20`
   );
+
   const results = data.results;
   if (!results || results.length === 0) throw new Error('Podcast not found');
 

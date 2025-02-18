@@ -43,12 +43,13 @@ const PodcastItem: React.FC<PodcastItemProps> = React.memo(({ podcast }) => {
 
   const prefetchPodcastDetail = () => {
     // console.log('Prefetching podcast detail for id:', podcast.id);
+    fetchPodcastDetail(podcast.id, true);
 
-    fetchPodcastDetail(podcast.id);
+    // fetchPodcastDetail(podcast.id);
   };
 
   return (
-    <li className={styles.podcastItem} data-id={podcast.id}>
+    <li className={styles.podcastItem}>
       <div className={styles.imageWrapper}>
         <PodcastImage src={podcast.artwork} alt={podcast.name} />
       </div>
